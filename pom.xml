@@ -61,5 +61,32 @@
 				</configuration>
 			</plugin>
 		</plugins>
+		<extensions>
+			<extension>
+				<groupId>org.jvnet.wagon-svn</groupId>
+				<artifactId>wagon-svn</artifactId>
+				<version>1.9</version>
+			</extension>
+		</extensions>
 	</build>
+
+	<scm>
+		<connection>scm:svn:http://jcimd.googlecode.com/svn</connection>
+		<developerConnection>scm:svn:https://jcimd.googlecode.com/svn</developerConnection>
+		<url>http://code.google.com/p/jcimd/source/browse</url>
+	</scm>
+	<distributionManagement>
+		<repository>
+			<id>jcimd-googlecode-m2-repo</id>
+			<name>Maven Repository for jCIMD</name>
+			<url>svn:https://jcimd.googlecode.com/svn/maven2/repo</url>
+		</repository>
+		<snapshotRepository>
+			<id>jcimd-googlecode-m2-snapshots</id>
+			<name>Maven Repository for jCIMD (snapshots)</name>
+			<url>svn:https://jcimd.googlecode.com/svn/maven2/snapshots</url>
+			<uniqueVersion>false</uniqueVersion>
+		</snapshotRepository>
+	</distributionManagement>
+
 </project>
