@@ -33,7 +33,7 @@ import com.googlecode.jcimd.UserData;
 
 public class DefaultSessionTest {
 
-	private static DummyCimd2Server server;
+	private static DummyCimdServer server;
 	private static int port = 9971;
 	private static String host = "localhost";
 	private String username = "user01";
@@ -42,7 +42,7 @@ public class DefaultSessionTest {
 
 	@BeforeClass
 	public static void setUpCimd2Server() throws Exception {
-		server = new DummyCimd2Server(port);
+		server = new DummyCimdServer(port);
 		server.start();
 	}
 

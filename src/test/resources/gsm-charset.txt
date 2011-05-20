@@ -1,0 +1,75 @@
+http://en.wikipedia.org/wiki/GSM_03.38
+
+In Mobile telephony GSM 03.38 is a character set used in the
+Short Message Service of GSM based cell phones. It is defined
+in GSM recommendation 03.38. Messages sent via this encoding
+can be encoded in the default GSM 7-bit alphabet, the 8-bit
+data alphabet, and the 16-bit UTF-16 alphabet. Support of the
+GSM 7-bit alphabet is mandatory for GSM handsets and network
+elements, but characters in languages such as Arabic, Chinese,
+Korean, Japanese or Cyrillic alphabet languages must be encoded
+using the 16-bit UTF-16 character encoding or an extended
+national language shift table.
+
+/* Table of special combinations, for convert_gsm_to_latin1. */
+/* Each cimd1, cimd2 pair is mapped to a character in the GSM default
+ * character set. */
+static const struct
+{
+    unsigned char cimd1, cimd2;
+    unsigned char gsm;
+}
+cimd_combinations[] = {
+    { 'O', 'a', 0 },     /* @ */
+    { 'L', '-', 1 },     /* Pounds sterling */
+    { 'Y', '-', 3 },     /* Yen */
+    { 'e', '`', 4 },     /* egrave */
+    { 'e', '\'', 5 },    /* eacute */
+    { 'u', '`', 6 },     /* ugrave */
+    { 'i', '`', 7 },     /* igrave */
+    { 'o', '`', 8 },     /* ograve */
+    { 'C', ',', 9 },     /* C cedilla */
+    { 'O', '/', 11 },    /* Oslash */
+    { 'o', '/', 12 },    /* oslash */
+    { 'A', '*', 14 },    /* Aring */
+    { 'a', '*', 15 },    /* aring */
+    { 'g', 'd', 16 },    /* greek delta */
+    { '-', '-', 17 },    /* underscore */
+    { 'g', 'f', 18 },    /* greek phi */
+    { 'g', 'g', 19 },    /* greek gamma */
+    { 'g', 'l', 20 },    /* greek lambda */
+    { 'g', 'o', 21 },    /* greek omega */
+    { 'g', 'p', 22 },    /* greek pi */
+    { 'g', 'i', 23 },    /* greek psi */
+    { 'g', 's', 24 },    /* greek sigma */
+    { 'g', 't', 25 },    /* greek theta */
+    { 'g', 'x', 26 },    /* greek xi */
+    { 'X', 'X', 27 },    /* escape */
+    { 'A', 'E', 28 },    /* AE ligature */
+    { 'a', 'e', 29 },    /* ae ligature */
+    { 's', 's', 30 },    /* german double s */
+    { 'E', '\'', 31 },   /* Eacute */
+    { 'q', 'q', '"' },
+    { 'o', 'x', 36 },    /* international currency symbol */
+    { '!', '!', 64 },    /* inverted ! */
+    { 'A', '"', 91 },    /* Adieresis */
+    { 'O', '"', 92 },    /* Odieresis */
+    { 'N', '~', 93 },    /* N tilde */
+    { 'U', '"', 94 },    /* Udieresis */
+    { 's', 'o', 95 },    /* section mark */
+    { '?', '?', 96 },    /* inverted ? */
+    { 'a', '"', 123 },   /* adieresis */
+    { 'o', '"', 124 },   /* odieresis */
+    { 'n', '~', 125 },   /* n tilde */
+    { 'u', '"', 126 },   /* udieresis */
+    { 'a', '`', 127 },   /* agrave */
+    { 0, 0, 0 }
+};
+
+
+/* Convert text in the CIMD2 User Data format to the GSM default
+ * character set.
+ * CIMD2 allows 8-bit characters in this format; they map directly
+ * to the corresponding ISO-8859-1 characters.  Since we are heading
+ * toward that character set in the end, we don't bother converting
+ * those to GSM. */

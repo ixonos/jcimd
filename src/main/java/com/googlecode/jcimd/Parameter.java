@@ -24,6 +24,43 @@ package com.googlecode.jcimd;
  * @see Packet
  */
 public class Parameter {
+
+    public static final int USER_IDENTITY = 10;
+    public static final int PASSWORD = 11;
+    public static final int DESTINATION_ADDRESS = 21;
+    public static final int ORIGINATING_ADDRESS = 23;
+    public static final int ORIGINATING_IMSI = 26;
+    public static final int ALPHANUMERIC_ORIGINATING_ADDRESS = 27;
+    public static final int ORIGINATED_VISITED_MSC = 28;
+    public static final int DATA_CODING_SCHEME = 30;
+    public static final int USER_DATA_HEADER = 32;
+    public static final int USER_DATA = 33;
+    public static final int USER_DATA_BINARY = 34;
+    public static final int MORE_MESSAGES_TO_SEND = 44;
+    public static final int VALIDITY_PERIOD_RELATIVE = 50;
+    public static final int VALIDITY_PERIOD_ABSOLUTE = 51;
+    public static final int PROTOCOL_IDENTIFIER = 52;
+    public static final int FIRST_DELIVERY_TIME_RELATIVE = 53;
+    public static final int FIRST_DELIVERY_TIME_ABSOLUTE = 54;
+    public static final int REPLY_PATH = 55;
+    public static final int STATUS_REPORT_REQUEST = 56;
+    public static final int CANCEL_ENABLED = 58;
+    public static final int CANCEL_MODE = 59;
+    public static final int MC_TIMESTAMP = 60;
+    public static final int STATUS_CODE = 61;
+    public static final int STATUS_ERROR_CODE = 62;
+    public static final int DISCHARGE_TIME = 63;
+    public static final int TARIFF_CLASS = 64;
+    public static final int SERVICE_DESCRIPTION = 65;
+    public static final int MESSAGE_COUNT = 66;
+    public static final int PRIORITY = 67;
+    public static final int DELIVERY_REQUEST_MODE = 68;
+    public static final int SERVICE_CENTER_ADDRESS = 69;
+    public static final int GET_PARAMETER = 500;
+    public static final int MC_TIME = 501;
+    public static final int ERROR_CODE = 900;
+    public static final int ERROR_TEXT = 901;
+
 	private int number;
 	private String value;
 

@@ -35,27 +35,27 @@ public class Packet {
 
 	/* Requests from client/application */
 	/** Login operation code. */
-	public static final int LOGIN = 1;
+	public static final int OP_LOGIN = 1;
 	/** Logout operation code. */
-	public static final int LOGOUT = 2;
+	public static final int OP_LOGOUT = 2;
 	/** Submit message operation code. */
-	public static final int SUBMIT_MESSAGE = 3;
+	public static final int OP_SUBMIT_MESSAGE = 3;
 	/** Enquire message status operation code. */
-	public static final int ENQUIRE_MESSAGE_STATUS = 4;
+	public static final int OP_ENQUIRE_MESSAGE_STATUS = 4;
 	/** Delivery request operation code. */
-	public static final int DELIVERY_REQUEST = 5;
+	public static final int OP_DELIVERY_REQUEST = 5;
 	/** Cancel message operation code. */
-	public static final int CANCEL_MESSAGE = 6;
+	public static final int OP_CANCEL_MESSAGE = 6;
 	/** Set (to change interface profile parameters) operation code. */
-	public static final int SET = 8;
+	public static final int OP_SET = 8;
 	/** Get (to retrieve interface profile parameters) operation code. */
-	public static final int GET = 9;
+	public static final int OP_GET = 9;
 
 	/* Requests from server/SMSC */
 	/** Deliver message operation code. */
-	public static final int DELIVER_MESSAGE = 20;
+	public static final int OP_DELIVER_MESSAGE = 20;
 	/** Deliver status report operation code. */
-	public static final int DELIVER_STATUS_REPORT = 23;
+	public static final int OP_DELIVER_STATUS_REPORT = 23;
 
 	/* Requests from either */
 	/**
@@ -63,10 +63,10 @@ public class Packet {
 	 * Used to check whether the link between the application and
 	 * the SMS Center is still alive.
 	 */
-	public static final int ALIVE = 40;
+	public static final int OP_ALIVE = 40;
 
 	/** General error response operation code. */
-	public static final int GENERAL_ERROR_RESPONSE = 98;
+	public static final int OP_GENERAL_ERROR_RESPONSE = 98;
 	/**
 	 * Nack response operation code. The nack operation is used to
 	 * reject an operation due to an incorrect checksum or an
@@ -74,7 +74,7 @@ public class Packet {
 	 * retransmission of the message. The packet sequence number
 	 * in a nack message is always the expected sequence number.
 	 */
-	public static final int NACK = 99;
+	public static final int OP_NACK = 99;
 
 	private int operationCode;
 	private Integer sequenceNumber;

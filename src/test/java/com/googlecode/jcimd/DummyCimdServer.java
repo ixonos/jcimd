@@ -33,7 +33,7 @@ import com.googlecode.jcimd.PacketSerializer;
 import com.googlecode.jcimd.Parameter;
 
 
-public class DummyCimd2Server {
+public class DummyCimdServer {
 	private final Log logger = LogFactory.getLog(this.getClass());
 
 	private int port;
@@ -42,9 +42,9 @@ public class DummyCimd2Server {
 	private PacketSerializer serializer;
 	private List<Packet> receivedCommands;
 
-	public DummyCimd2Server(int port) {
+	public DummyCimdServer(int port) {
 		this.port = port;
-		this.serializer = new PacketSerializer("DummyCimd2Server");
+		this.serializer = new PacketSerializer("DummyCimdServer");
 		this.receivedCommands = new LinkedList<Packet>();
 	}
 
@@ -63,7 +63,7 @@ public class DummyCimd2Server {
 							if (logger.isInfoEnabled()) {
 								logger.info("Starting session with " + socket.getInetAddress().getHostAddress());
 							}
-							DummyCimd2Server.Session session = new Session(socket);
+							DummyCimdServer.Session session = new Session(socket);
 							//List<Session> sessions = ...;
 							//sessions.add(session);
 							new Thread(session).start();
@@ -123,20 +123,20 @@ public class DummyCimd2Server {
 					// fixed to be 50 more than the operation code of 
 					// the request packet. The packet number is the
 					// same as the request message.
-					case Packet.LOGIN:
-					case Packet.LOGOUT:
+					case Packet.OP_LOGIN:
+					case Packet.OP_LOGOUT:
 						response = new Packet(
 								request.getOperationCode() + 50,
 								request.getSequenceNumber());
 						break;
-					case Packet.SUBMIT_MESSAGE:
+					case Packet.OP_SUBMIT_MESSAGE:
 						response = new Packet(
 								request.getOperationCode() + 50,
 								request.getSequenceNumber(),
 								new Parameter(60, new SimpleDateFormat("yyMMddHHmmss").format(new Date())));
 						break;
 					default:
-						response = new Packet(Packet.GENERAL_ERROR_RESPONSE);
+						response = new Packet(Packet.OP_GENERAL_ERROR_RESPONSE);
 						break;
 					}
 					serializer.serialize(response, this.outputStream);

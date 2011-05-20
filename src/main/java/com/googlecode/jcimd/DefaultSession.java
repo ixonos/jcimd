@@ -20,7 +20,6 @@ import java.io.OutputStream;
 import java.math.BigInteger;
 import java.net.Socket;
 import java.text.DateFormat;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.LinkedList;
@@ -83,12 +82,13 @@ public class DefaultSession implements Session {
 
 	private void login(String username, String password)
 	throws IOException, SessionException {
-		send(new Packet(Packet.LOGIN,
-				new Parameter(10, username), new Parameter(11, password)));
+		send(new Packet(Packet.OP_LOGIN,
+				new Parameter(Parameter.USER_IDENTITY, username),
+				new Parameter(Parameter.PASSWORD, password)));
 	}
 
 	private void logout() throws IOException, SessionException {
-		send(new Packet(Packet.LOGOUT));
+		send(new Packet(Packet.OP_LOGOUT));
 	}
 
 	@Override
@@ -104,7 +104,7 @@ public class DefaultSession implements Session {
 	}
 
 	@Override
-	public Date submitMessage(String destinationAddress,
+	public String submitMessage(String destinationAddress,
 			String originatingAddress, String alphanumericOriginatingAddress,
 			Integer dataCodingScheme,
 			UserData userData,
@@ -120,70 +120,65 @@ public class DefaultSession implements Session {
 			Integer priority)
 	throws IOException, SessionException {
 		List<Parameter> parameters = new LinkedList<Parameter>();
-		parameters.add(new Parameter(21, destinationAddress));
-		addParameterIfNotNull(23, originatingAddress, parameters);
-		addParameterIfNotNull(27, alphanumericOriginatingAddress, parameters);
-		addParameterIfNotNull(30, dataCodingScheme, parameters);
+		parameters.add(new Parameter(Parameter.DESTINATION_ADDRESS, destinationAddress));
+		addParameterIfNotNull(Parameter.ORIGINATING_ADDRESS, originatingAddress, parameters);
+		addParameterIfNotNull(Parameter.ALPHANUMERIC_ORIGINATING_ADDRESS, alphanumericOriginatingAddress, parameters);
+		addParameterIfNotNull(Parameter.DATA_CODING_SCHEME, dataCodingScheme, parameters);
 
 		if (userData != null) {
-			addParameterIfNotNull(32, userData.getHeader(), parameters);
+			addParameterIfNotNull(Parameter.USER_DATA_HEADER, userData.getHeader(), parameters);
 			if (!userData.isBodyBinary()) {
-				addParameterIfNotNull(33, userData.getBody(), parameters);
+				addParameterIfNotNull(Parameter.USER_DATA, userData.getBody(), parameters);
 			} else {
-				addParameterIfNotNull(34, userData.getBinaryBody(), parameters);
+				addParameterIfNotNull(Parameter.USER_DATA_BINARY, userData.getBinaryBody(), parameters);
 			}
 		}
 
-		addParameterIfNotNull(44, moreMessagesToSend, parameters);
+		addParameterIfNotNull(Parameter.MORE_MESSAGES_TO_SEND, moreMessagesToSend, parameters);
 
 		if (validityPeriod != null) {
-			/*
-			/ int 50 Validity period relative 3 O
-			\ int 51 Validity period absolute 3 O
-			*/
 			if (validityPeriod.isRelative()) {
-				addParameterIfNotNull(50, validityPeriod.getRelativeTime(), parameters);
+				addParameterIfNotNull(Parameter.VALIDITY_PERIOD_RELATIVE, validityPeriod.getRelativeTime(), parameters);
 			} else {
-				addParameterIfNotNull(51, validityPeriod.getAbsoluteTime(), parameters);
+				addParameterIfNotNull(Parameter.VALIDITY_PERIOD_ABSOLUTE, validityPeriod.getAbsoluteTime(), parameters);
 			}
 		}
 
 		addParameterIfNotNull(52, protocolIdentifier, parameters);
 
 		if (firstDeliveryTime != null) {
-			/*
-			/ int 053 First delivery time relative 4 O
-			\ int 054 First delivery time absolute 4 O
-			*/
 			if (firstDeliveryTime.isRelative()) {
-				addParameterIfNotNull(53, firstDeliveryTime.getRelativeTime(), parameters);
+				addParameterIfNotNull(Parameter.FIRST_DELIVERY_TIME_RELATIVE, firstDeliveryTime.getRelativeTime(), parameters);
 			} else {
-				addParameterIfNotNull(54, firstDeliveryTime.getAbsoluteTime(), parameters);
+				addParameterIfNotNull(Parameter.FIRST_DELIVERY_TIME_ABSOLUTE, firstDeliveryTime.getAbsoluteTime(), parameters);
 			}
 		}
 
-		addParameterIfNotNull(55, replyPathEnabled, parameters);
-		addParameterIfNotNull(56, statusReportRequest, parameters);
-		addParameterIfNotNull(58, cancelEnabled, parameters);
-		addParameterIfNotNull(64, tariffClass, parameters);
-		addParameterIfNotNull(65, serviceDescription, parameters);
-		addParameterIfNotNull(67, priority, parameters);
+		addParameterIfNotNull(Parameter.REPLY_PATH, replyPathEnabled, parameters);
+		addParameterIfNotNull(Parameter.STATUS_REPORT_REQUEST, statusReportRequest, parameters);
+		addParameterIfNotNull(Parameter.CANCEL_ENABLED, cancelEnabled, parameters);
+		addParameterIfNotNull(Parameter.TARIFF_CLASS, tariffClass, parameters);
+		addParameterIfNotNull(Parameter.SERVICE_DESCRIPTION, serviceDescription, parameters);
+		addParameterIfNotNull(Parameter.PRIORITY, priority, parameters);
 
-		Packet response = send(new Packet(Packet.SUBMIT_MESSAGE,
+		Packet response = send(new Packet(Packet.OP_SUBMIT_MESSAGE,
 				parameters.toArray(new Parameter[0])));
-		Parameter serviceCenterTimeStampParameter = response.getParameter(60);
+		Parameter serviceCenterTimeStampParameter = response.getParameter(Parameter.MC_TIMESTAMP);
 		if (serviceCenterTimeStampParameter == null) {
 			throw new IOException("Missing response parameter " +
-					"(Service Center Time Stamp - 060)");
+					"(Message Center Timestamp - 060)");
 		}
+		return serviceCenterTimeStampParameter.getValue();
+		/*
 		try {
 			return dateFormat.parse(serviceCenterTimeStampParameter.getValue());
-		} catch (ParseException e) {
+		} catch (java.text.ParseException e) {
 			throw new IOException("Invalid response parameter " +
-					"(Service Center Time Stamp - 060). " +
+					"(Message Center Timestamp - 060). " +
 					"Expecting yyMMddHHmmss format. But got " +
 					serviceCenterTimeStampParameter.getValue());
 		}
+		*/
 	}
 
 	private void addParameterIfNotNull(
@@ -220,6 +215,13 @@ public class DefaultSession implements Session {
 		if (value != null) {
 			parameters.add(new Parameter(number, dateFormat.format(value)));
 		}
+	}
+
+	@Override
+	public MessageStatus enquireMessageStatus(String destinationAddress,
+			String messageCenterTimestamp) throws IOException, SessionException {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }
