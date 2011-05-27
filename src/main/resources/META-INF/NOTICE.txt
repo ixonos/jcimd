@@ -1,0 +1,5 @@
+jCIMD (Java CIMD API)
+Copyright 2010-2011 Lorenzo Dee
+
+This product includes software developed by
+The Apache Software Foundation (http://www.apache.org/).
