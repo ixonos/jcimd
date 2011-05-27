@@ -63,6 +63,10 @@ public class Gsm7BitPackedCharset extends Charset {
 				}
 				char ch = in.get();
 				int b = CHAR_TO_BYTE[ch];
+				if (b == GsmCharsetProvider.NO_GSM_BYTE) {
+					// If ch does not map to a GSM character, replace with a '?'
+					b = '?';
+				}
 				byte highByte = (byte) ((b >> 8) & 0xFF);
 				if (highByte > 0) {
 					data |= (highByte << nBits);
@@ -112,8 +116,14 @@ public class Gsm7BitPackedCharset extends Charset {
 					int i = data & 0x7F;
 					if (i != GsmCharsetProvider.ESCAPE) {
 						if (escaped) {
-							// TODO: What if this is an invalid escape sequence?
-							out.put(BYTE_TO_ESCAPED_CHAR[i]);
+							char escapedChar = BYTE_TO_ESCAPED_CHAR[i];
+							if (escapedChar != GsmCharsetProvider.NO_GSM_BYTE) {
+								out.put(escapedChar);
+							} else {
+								// If invalid escape sequence use SPACE
+								out.put(' ');
+								out.put(BYTE_TO_CHAR[i]);
+							}
 							escaped = false;
 						} else {
 							out.put(BYTE_TO_CHAR[i]);

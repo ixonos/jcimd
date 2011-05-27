@@ -58,14 +58,13 @@ public class Gsm8BitUnpackedCharset extends Charset {
 				int b = CHAR_TO_BYTE[ch];
 				if (b == GsmCharsetProvider.NO_GSM_BYTE) {
 					// If ch does not map to a GSM character, replace with a '?'
-					out.put((byte) 0x3F); // question mark
-				} else {
-					byte highByte = (byte) ((b >> 8) & 0xFF);
-					if (highByte > 0) {
-						out.put(highByte);
-					}
-					out.put((byte) (b & 0xFF));
+					b = '?';
 				}
+				byte highByte = (byte) ((b >> 8) & 0xFF);
+				if (highByte > 0) {
+					out.put(highByte);
+				}
+				out.put((byte) (b & 0xFF));
 				remaining--;
 			}
 			return CoderResult.UNDERFLOW;
@@ -96,8 +95,15 @@ public class Gsm8BitUnpackedCharset extends Charset {
 					}
 					bite = in.get();
 					remaining--;
-					// TODO: What if this is an invalid escape sequence?
-					out.put(BYTE_TO_ESCAPED_CHAR[bite & 0x7F]);
+					int i = bite & 0x7F;
+					char escapedChar = BYTE_TO_ESCAPED_CHAR[i];
+					if (escapedChar != GsmCharsetProvider.NO_GSM_BYTE) {
+						out.put(escapedChar);
+					} else {
+						// If invalid escape sequence use SPACE
+						out.put(' ');
+						out.put(BYTE_TO_CHAR[i]);
+					}
 				} else {
 					out.put(BYTE_TO_CHAR[bite & 0x7F]);
 				}

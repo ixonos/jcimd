@@ -58,6 +58,21 @@ public class Gsm8BitUnpackedCharsetTest {
 	}
 
 	@Test
+	public void decodesInvalidEscapeSequence() throws Exception {
+		// 0x1B 0x48 0x1B 0x4A
+		// (esc) 'H' (esc) 'J'
+		// Escape (0x1B) should be followed by a valid character.
+		// If not, 0x1B is decoded as SPACE, and the following byte
+		// is treated as a non-escaped sequence.
+		byte[] bytes = new byte[] {
+				(byte) 0x1B, (byte) 'H', (byte) 0x1B, (byte) 'J'
+			};
+		ByteBuffer byteBuffer = ByteBuffer.wrap(bytes);
+		CharBuffer charBuffer = decoder.decode(byteBuffer);
+		assertEquals(" H J", charBuffer.toString());
+	}
+
+	@Test
 	public void encodesAlphaNumericCharacters() throws Exception {
 		String string = "It is easy to send text messages. 123";
 		CharBuffer in = CharBuffer.wrap(string);
@@ -97,6 +112,14 @@ public class Gsm8BitUnpackedCharsetTest {
 		for (int i = 0; i < expecteds.length; i++) {
 			assertEquals("at element " + i, expecteds[i], actuals[i]);
 		}
+	}
+
+	@Test
+	public void usesQuestionMarkToEncodeCharactersOutsideGsmRange() throws Exception {
+		CharBuffer in = CharBuffer.wrap("\u604F\u7D59");
+		ByteBuffer out = ByteBuffer.allocate(2);
+		encoder.encode(in, out, true);
+		assertEquals("??", new String(out.array()));
 	}
 
 	@Test

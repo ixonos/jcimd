@@ -29,13 +29,13 @@ import org.apache.commons.logging.LogFactory;
  */
 public class GsmCharsetProvider extends CharsetProvider {
 
-	static final Log logger = LogFactory.getLog(GsmCharsetProvider.class);
+	private static final Log logger = LogFactory.getLog(GsmCharsetProvider.class);
+
 	static final char ESCAPE = 0x1B;
 	static char[] BYTE_TO_CHAR_SMALL_C_CEDILLA = new char[128];
 	static char[] BYTE_TO_CHAR_ESCAPED_DEFAULT = new char[128];
 	static int[] CHAR_TO_BYTE_SMALL_C_CEDILLA = new int[0x7FFF]; // 32k
 	static final char NO_GSM_BYTE = 0xFF;
-	static final char GSM_LETTER_C_WITH_CEDILLA = 0x09;
 
 	static {
 		try {

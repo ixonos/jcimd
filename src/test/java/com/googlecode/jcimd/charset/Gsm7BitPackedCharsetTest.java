@@ -82,6 +82,25 @@ public class Gsm7BitPackedCharsetTest {
 	}
 
 	@Test
+	public void decodesInvalidEscapeSequence() throws Exception {
+		// 0x1B 0x48 0x1B 0x4A
+		// (esc) 'H' (esc) 'J'
+		// 0001 1011 0100 1000 0001 1011 0100 1010 
+		// _001 1011 _100 1000 _001 1011 _100 1010 
+		// 0001 1011 1110 0100 0100 0110 ____ 1001
+		// 0x1B 0xE4 0x46 0x09
+		// Escape (0x1B) should be followed by a valid character.
+		// If not, 0x1B is decoded as SPACE, and the following byte
+		// is treated as a non-escaped sequence.
+		byte[] bytes = new byte[] {
+				(byte) 0x1B, (byte) 0xE4, (byte) 0x46, (byte) 0x09
+			};
+		ByteBuffer byteBuffer = ByteBuffer.wrap(bytes);
+		CharBuffer charBuffer = decoder.decode(byteBuffer);
+		assertEquals(" H J", charBuffer.toString());
+	}
+
+	@Test
 	public void encodesAlphaNumericCharacters() throws Exception {
 		String string = "It is easy to send text messages. 123";
 		CharBuffer in = CharBuffer.wrap(string);
@@ -134,21 +153,23 @@ public class Gsm7BitPackedCharsetTest {
 	}
 
 	@Test
+	public void usesQuestionMarkToEncodeCharactersOutsideGsmRange() throws Exception {
+		CharBuffer in = CharBuffer.wrap("\u604F\u7D59");
+		ByteBuffer out = ByteBuffer.allocate(2);
+		encoder.encode(in, out, true);
+		// 0x3F 0x3F
+		// _011 1111 _011 1111
+		// 1011 1111 __01 1111
+		// 0xBF 0x1F
+		assertArrayEquals(
+				new byte[] { (byte) 0xBF, (byte) 0x1F }, out.array());
+	}
+
+	@Test
 	public void encodeAndDecode() throws Exception {
 		CharBuffer charBuffer1 = CharBuffer.wrap("abc123{}[]");
 		CharBuffer charBuffer2 = decoder.decode(encoder.encode(charBuffer1));
 		assertEquals("abc123{}[]", charBuffer2.toString());
 	}
 
-	@Test
-	public void testCapitalCWithCedilla() throws Exception {
-		char upperCaseCWithCedilla = '\u00E7';
-		CharBuffer charBuffer = CharBuffer.wrap(new char[] { upperCaseCWithCedilla });
-		ByteBuffer byteBuffer = encoder.encode(charBuffer);
-		byte expecteds[] = new byte[] { 0x09 };
-		byte actuals[] = byteBuffer.array();
-		for (int i = 0; i < expecteds.length; i++) {
-			assertEquals("at element " + i, expecteds[i], actuals[i]);
-		}
-	}
 }
