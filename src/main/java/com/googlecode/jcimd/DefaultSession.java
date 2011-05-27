@@ -17,7 +17,6 @@ package com.googlecode.jcimd;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.math.BigInteger;
 import java.net.Socket;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -128,8 +127,10 @@ public class DefaultSession implements Session {
 		if (userData != null) {
 			addParameterIfNotNull(Parameter.USER_DATA_HEADER, userData.getHeader(), parameters);
 			if (!userData.isBodyBinary()) {
+				// TODO: Use UserData#getBody() that returns byte[]
 				addParameterIfNotNull(Parameter.USER_DATA, userData.getBody(), parameters);
 			} else {
+				// TODO: Use UserData#getBody() that returns byte[]
 				addParameterIfNotNull(Parameter.USER_DATA_BINARY, userData.getBinaryBody(), parameters);
 			}
 		}
@@ -138,9 +139,11 @@ public class DefaultSession implements Session {
 
 		if (validityPeriod != null) {
 			if (validityPeriod.isRelative()) {
-				addParameterIfNotNull(Parameter.VALIDITY_PERIOD_RELATIVE, validityPeriod.getRelativeTime(), parameters);
+				addParameterIfNotNull(Parameter.VALIDITY_PERIOD_RELATIVE,
+						validityPeriod.getRelativeTime(), parameters);
 			} else {
-				addParameterIfNotNull(Parameter.VALIDITY_PERIOD_ABSOLUTE, validityPeriod.getAbsoluteTime(), parameters);
+				addParameterIfNotNull(Parameter.VALIDITY_PERIOD_ABSOLUTE,
+						validityPeriod.getAbsoluteTime(), parameters);
 			}
 		}
 
@@ -148,9 +151,11 @@ public class DefaultSession implements Session {
 
 		if (firstDeliveryTime != null) {
 			if (firstDeliveryTime.isRelative()) {
-				addParameterIfNotNull(Parameter.FIRST_DELIVERY_TIME_RELATIVE, firstDeliveryTime.getRelativeTime(), parameters);
+				addParameterIfNotNull(Parameter.FIRST_DELIVERY_TIME_RELATIVE,
+						firstDeliveryTime.getRelativeTime(), parameters);
 			} else {
-				addParameterIfNotNull(Parameter.FIRST_DELIVERY_TIME_ABSOLUTE, firstDeliveryTime.getAbsoluteTime(), parameters);
+				addParameterIfNotNull(Parameter.FIRST_DELIVERY_TIME_ABSOLUTE,
+						firstDeliveryTime.getAbsoluteTime(), parameters);
 			}
 		}
 
@@ -175,8 +180,8 @@ public class DefaultSession implements Session {
 		} catch (java.text.ParseException e) {
 			throw new IOException("Invalid response parameter " +
 					"(Message Center Timestamp - 060). " +
-					"Expecting yyMMddHHmmss format. But got " +
-					serviceCenterTimeStampParameter.getValue());
+					"Expecting yyMMddHHmmss format. But got [" +
+					serviceCenterTimeStampParameter.getValue() + "]");
 		}
 		*/
 	}
@@ -191,21 +196,21 @@ public class DefaultSession implements Session {
 	private void addParameterIfNotNull(
 			int number, Integer value, List<Parameter> parameters) {
 		if (value != null) {
-			parameters.add(new Parameter(number, value.toString()));
+			parameters.add(new Parameter(number, value));
 		}
 	}
 
 	private void addParameterIfNotNull(
 			int number, Boolean value, List<Parameter> parameters) {
 		if (value != null) {
-			parameters.add(new Parameter(number, (value ? "1" : "0")));
+			parameters.add(new Parameter(number, value));
 		}
 	}
 
 	private void addParameterIfNotNull(
 			int number, byte[] value, List<Parameter> parameters) {
 		if (value != null) {
-			parameters.add(new Parameter(number, new BigInteger(value).toString(16)));
+			parameters.add(new Parameter(number, value));
 		}
 	}
 

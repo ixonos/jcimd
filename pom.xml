@@ -27,6 +27,11 @@
 			<version>1.1.1</version>
 		</dependency>
 		<dependency>
+			<groupId>commons-lang</groupId>
+			<artifactId>commons-lang</artifactId>
+			<version>2.6</version>
+		</dependency>
+		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<version>4.7</version>
@@ -79,7 +84,7 @@
 		<repository>
 			<id>jcimd-googlecode-m2-repo</id>
 			<name>Maven Repository for jCIMD</name>
-			<url>svn:https://jcimd.googlecode.com/svn/maven2/repo</url>
+			<url>svn:https://jcimd.googlecode.com/svn/maven2/releases</url>
 		</repository>
 		<snapshotRepository>
 			<id>jcimd-googlecode-m2-snapshots</id>

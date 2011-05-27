@@ -18,6 +18,40 @@ package com.googlecode.jcimd;
  * Represents a <a href="http://en.wikipedia.org/wiki/CIMD">CIMD</a>
  * (Computer Interface to Message Distribution) command/operation
  * parameter. Used as part of a {@link Packet packet}.
+ * <p>
+ * The CIMD specification lists the several parameter types. They are
+ * supported by this class as follows:
+ * <ul>
+ * <li><strong>Integer (int)</strong>
+ * <pre>new Parameter(30, 0);</pre>
+ * <p>
+ * This is internally converted to a string ('0'-'9').
+ * </p><br/>
+ * </li>
+ * <li><strong>Address (addr)</strong>
+ * <pre>new Parameter(21, "+19098898888");</pre>
+ * <p>
+ * No conversion is done here.
+ * </p><br/>
+ * </li>
+ * <li><strong>Hexadecimal (hex)</strong>
+ * <pre>
+ * byte[] bytes = new byte[] { 0x05, 0x00, 0x03, 0x2a, 0x03, 0x01 };		
+ * Parameter p = new Parameter(34, bytes);
+ * assert "0500032a0301".equals(p.getValue());
+ * </pre>
+ * <p>
+ * This is internally converted to a hexadecimal string (containing
+ * digits 0-9, and letters 'a'-'f'). The above example is converted
+ * to <code>"0500032a0301"</code>.
+ * </p><br/>
+ * </li>
+ * <li><strong>User data (ud)</strong>
+ * <p>
+ * Please see {@link UserData}.
+ * </p><br/>
+ * </li>
+ * </ul>
  *
  * @author Lorenzo Dee
  *
@@ -64,18 +98,29 @@ public class Parameter {
 	private int number;
 	private String value;
 
-	// TODO: Consider overloading constructor to accept other Java-types (e.g. int, java.util.Date)
-	/*
-	 * The conversion would be as follows:
-	 * int -> toString()
-	 * Date -> yyMMddHHmmss (12 digits)
-	 * boolean -> 0 - false; 1 - true
-	 * byte[] -> as hex string (e.g. byte[] { '0', '1', '2' } --> "303132")
-	 */
+	public Parameter(int number, byte[] value) {
+		this(number, AsciiUtils.byteArrayToHexString(value));
+	}
+
+	public Parameter(int number, int value) {
+		this(number, Integer.toString(value));
+	}
+
+	private static final String TRUE = "1";
+	private static final String FALSE = "0";
+
+	public Parameter(int number, boolean value) {
+		this(number, value ? TRUE : FALSE );
+	}
+
 	public Parameter(int number, String value) {
 		if (number < 0 || number > 999) {
 			throw new IllegalArgumentException(
 					"parameter number must be between 0 and 999");
+		}
+		if (value == null) {
+			throw new IllegalArgumentException(
+					"parameter value cannot be null");
 		}
 		this.number = number;
 		this.value = value;
@@ -98,7 +143,7 @@ public class Parameter {
 		if (number == 11) {
 			builder.append("<password-not-shown>");
 		} else {
-			builder.append(value);
+			builder.append(new String(value));
 		}
 		return builder.toString();
 	}
@@ -130,4 +175,5 @@ public class Parameter {
 			return false;
 		return true;
 	}
+
 }

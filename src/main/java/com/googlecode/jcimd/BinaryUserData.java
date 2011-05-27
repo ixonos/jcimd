@@ -26,12 +26,20 @@ public class BinaryUserData extends AbstractUserData {
 
 	private byte[] binaryBody;
 
-	public BinaryUserData(byte[] binaryBody, byte[] header) {
-		super(header);
+	public BinaryUserData(byte[] binaryBody, byte[] header, int dataCoding) {
+		super(header, dataCoding);
 		if (binaryBody == null) {
 			throw new IllegalArgumentException("binaryBody cannot be null");
 		}
 		this.binaryBody = binaryBody;
+	}
+
+	public BinaryUserData(byte[] binaryBody, byte[] header) {
+		this(binaryBody, header, 0);
+	}
+
+	public BinaryUserData(byte[] binaryBody) {
+		this(binaryBody, null, 0);
 	}
 
 	/* (non-Javadoc)

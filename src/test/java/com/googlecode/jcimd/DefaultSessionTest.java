@@ -85,7 +85,7 @@ public class DefaultSessionTest {
 			String originatingAddress = null;
 			String alphanumericOriginatingAddress = null;
 			Integer dataCodingScheme = null;
-			UserData userData = new StringUserData("Hi there", null);
+			UserData userData = new StringUserData("Hi there");
 			Boolean moreMessagesToSend = null;
 			TimePeriod validityPeriod = null;
 			Integer protocolIdentifier = null;

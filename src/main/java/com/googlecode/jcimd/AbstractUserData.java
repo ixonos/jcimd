@@ -17,14 +17,21 @@ package com.googlecode.jcimd;
 public abstract class AbstractUserData implements UserData {
 
 	protected byte[] header;
+	protected int dataCodingScheme;
 
-	public AbstractUserData(byte[] header) {
+	public AbstractUserData(byte[] header, int dataCodingScheme) {
 		this.header = header;
+		this.dataCodingScheme = dataCodingScheme;
 	}
 
 	@Override
 	public byte[] getHeader() {
 		return this.header;
+	}
+
+	@Override
+	public int getDataCodingScheme() {
+		return this.dataCodingScheme;
 	}
 
 }

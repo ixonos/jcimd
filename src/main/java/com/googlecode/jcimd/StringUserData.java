@@ -26,12 +26,20 @@ public class StringUserData extends AbstractUserData {
 
 	private String body;
 
-	public StringUserData(String body, byte[] header) {
-		super(header);
+	public StringUserData(String body, byte[] header, int dataCoding) {
+		super(header, dataCoding);
 		if (body == null) {
 			throw new IllegalArgumentException("body cannot be null");
 		}
 		this.body = body;
+	}
+
+	public StringUserData(String body, byte[] header) {
+		this(body, header, 0);
+	}
+
+	public StringUserData(String body) {
+		this(body, null, 0);
 	}
 
 	/* (non-Javadoc)

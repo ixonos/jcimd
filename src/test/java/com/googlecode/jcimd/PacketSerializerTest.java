@@ -23,6 +23,7 @@ import java.util.Arrays;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.googlecode.jcimd.ApplicationPacketSequenceNumberGenerator;
@@ -32,10 +33,10 @@ import com.googlecode.jcimd.Parameter;
 
 public class PacketSerializerTest {
 
-	public static final byte STX = 0x02;
-	public static final byte TAB = '\t'; // ASCII value is 9
-	public static final byte COLON = ':'; // ASCII value is 58
-	public static final byte ETX = 0x03;
+	public static final char STX = 0x02;
+	public static final char TAB = '\t'; // ASCII value is 9
+	public static final char COLON = ':'; // ASCII value is 58
+	public static final char ETX = 0x03;
 	
 	private PacketSerializer serializer;
 
@@ -58,21 +59,20 @@ public class PacketSerializerTest {
 		}
 		return sum;
 	}
-
+	
 	@Test
 	public void serializeLoginCommand() throws Exception {
 		Packet command = new Packet(1,
 				new Parameter(10, "username"),
 				new Parameter(11, "password"));
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-		byte expected[] = new byte[] {
-				STX, '0', '1', COLON, '0', '0', '1', TAB,
-				'0', '1', '0', COLON, 'u', 's', 'e', 'r', 'n', 'a', 'm', 'e', TAB,
-				'0', '1', '1', COLON, 'p', 'a', 's', 's', 'w', 'o', 'r', 'd', TAB,
-				0, 0, /* two-bytes for checksum */
-				ETX };
+		byte[] expected = concat(
+				("" + STX + "01" + COLON + "001" + TAB).getBytes(),
+				("010" + COLON + "username" + TAB).getBytes(),
+				("011" + COLON + "password" + TAB).getBytes(),
+				("CS"/* two-bytes for checksum */ + ETX).getBytes());
 		int checksum = calculateCheckSum(Arrays.copyOfRange(expected, 0, expected.length - 3));
-		String checkSumHexString = Integer.toHexString(checksum).toUpperCase();
+		String checkSumHexString = String.format("%02x", checksum);
 		expected[expected.length - 3] = (byte) checkSumHexString.charAt(0);
 		expected[expected.length - 2] = (byte) checkSumHexString.charAt(1);
 		serializer.serialize(command, outputStream);
@@ -81,14 +81,13 @@ public class PacketSerializerTest {
 
 	@Test
 	public void deserializeLoginCommand() throws Exception {
-		byte[] bytes = new byte[] {
-				STX, '0', '1', COLON, '0', '0', '1', TAB,
-				'0', '1', '0', COLON, 'u', 's', 'e', 'r', 'n', 'a', 'm', 'e', TAB,
-				'0', '1', '1', COLON, 'p', 'a', 's', 's', 'w', 'o', 'r', 'd', TAB,
-				0, 0, /* two-bytes for checksum */
-				ETX };
+		byte[] bytes = concat(
+				("" + STX + "01" + COLON + "001" + TAB).getBytes(),
+				("010" + COLON + "username" + TAB).getBytes(),
+				("011" + COLON + "password" + TAB).getBytes(),
+				("CS"/* two-bytes for checksum */ + ETX).getBytes());
 		int checksum = calculateCheckSum(Arrays.copyOfRange(bytes, 0, bytes.length - 3));
-		String checkSumHexString = Integer.toHexString(checksum).toUpperCase();
+		String checkSumHexString = String.format("%02X", checksum);
 		bytes[bytes.length - 3] = (byte) checkSumHexString.charAt(0);
 		bytes[bytes.length - 2] = (byte) checkSumHexString.charAt(1);
 		ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
@@ -97,20 +96,17 @@ public class PacketSerializerTest {
 				new Parameter(11, "password"));
 		Packet actual = serializer.deserialize(inputStream);
 		assertEquals(command, actual);
-		System.out.println(actual);
 	}
 
 	@Test
 	public void deserializeLoginCommandWithExtraDataBetweenPackets() throws Exception {
-		byte[] bytes = new byte[] {
-				'n', 'o', 'i', 's', 'e',
-				STX, '0', '1', COLON, '0', '0', '1', TAB,
-				'0', '1', '0', COLON, 'u', 's', 'e', 'r', 'n', 'a', 'm', 'e', TAB,
-				'0', '1', '1', COLON, 'p', 'a', 's', 's', 'w', 'o', 'r', 'd', TAB,
-				0, 0, /* two-bytes for checksum */
-				ETX, 'n', 'o', 'i', 's', 'e' };
+		byte[] bytes = concat(
+				("noise" + STX + "01" + COLON + "001" + TAB).getBytes(),
+				("010" + COLON + "username" + TAB).getBytes(),
+				("011" + COLON + "password" + TAB).getBytes(),
+				("CS"/* two-bytes for checksum */ + ETX + "noise").getBytes());
 		int checksum = calculateCheckSum(Arrays.copyOfRange(bytes, 5, bytes.length - 8));
-		String checkSumHexString = Integer.toHexString(checksum).toUpperCase();
+		String checkSumHexString = String.format("%02X", checksum);
 		bytes[bytes.length - 8] = (byte) checkSumHexString.charAt(0);
 		bytes[bytes.length - 7] = (byte) checkSumHexString.charAt(1);
 		ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
@@ -119,19 +115,17 @@ public class PacketSerializerTest {
 				new Parameter(11, "password"));
 		Packet actual = serializer.deserialize(inputStream);
 		assertEquals(command, actual);
-		System.out.println(actual);
 	}
 
 	@Test(expected=IOException.class)
 	public void deserializeCommandWithMissingColon() throws Exception {
-		byte[] bytes = new byte[] {
-				STX, '0', '1', TAB, '0', '0', '1', TAB,
-				'0', '1', '0', COLON, 'u', 's', 'e', 'r', 'n', 'a', 'm', 'e', TAB,
-				'0', '1', '1', COLON, 'p', 'a', 's', 's', 'w', 'o', 'r', 'd', TAB,
-				0, 0, /* two-bytes for checksum */
-				ETX };
+		byte[] bytes = concat(
+				("" + STX + "01" + COLON + "001" + TAB).getBytes(),
+				("010" + /*COLON +*/ "username" + TAB).getBytes(),
+				("011" + COLON + "password" + TAB).getBytes(),
+				("CS"/* two-bytes for checksum */ + ETX).getBytes());
 		int checksum = calculateCheckSum(Arrays.copyOfRange(bytes, 0, bytes.length - 3));
-		String checkSumHexString = Integer.toHexString(checksum).toUpperCase();
+		String checkSumHexString = String.format("%02X", checksum);
 		bytes[bytes.length - 3] = (byte) checkSumHexString.charAt(0);
 		bytes[bytes.length - 2] = (byte) checkSumHexString.charAt(1);
 		ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
@@ -145,14 +139,13 @@ public class PacketSerializerTest {
 
 	@Test(expected=IOException.class)
 	public void deserializeCommandWithFourByteParameterType() throws Exception {
-		byte[] bytes = new byte[] {
-				STX, '0', '1', COLON, '0', '0', '1', TAB,
-				'0', '1', '0', '0', COLON, 'u', 's', 'e', 'r', 'n', 'a', 'm', 'e',
-				'0', '1', '1', COLON, 'p', 'a', 's', 's', 'w', 'o', 'r', 'd', TAB,
-				0, 0, /* two-bytes for checksum */
-				ETX };
+		byte[] bytes = concat(
+				("" + STX + "01" + COLON + "001" + TAB).getBytes(),
+				("0100" + COLON + "username" + TAB).getBytes(),
+				("011" + COLON + "password" + TAB).getBytes(),
+				("CS"/* two-bytes for checksum */ + ETX).getBytes());
 		int checksum = calculateCheckSum(Arrays.copyOfRange(bytes, 0, bytes.length - 3));
-		String checkSumHexString = Integer.toHexString(checksum).toUpperCase();
+		String checkSumHexString = String.format("%02X", checksum);
 		bytes[bytes.length - 3] = (byte) checkSumHexString.charAt(0);
 		bytes[bytes.length - 2] = (byte) checkSumHexString.charAt(1);
 		ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
@@ -166,12 +159,11 @@ public class PacketSerializerTest {
 
 	@Test(expected=IOException.class)
 	public void deserializeCommandWithNonHexCheckSum() throws Exception {
-		byte[] bytes = new byte[] {
-				STX, '0', '1', COLON, '0', '0', '1', TAB,
-				'0', '1', '0', '0', COLON, 'u', 's', 'e', 'r', 'n', 'a', 'm', 'e',
-				'0', '1', '1', COLON, 'p', 'a', 's', 's', 'w', 'o', 'r', 'd', TAB,
-				0, 0, /* two-bytes for checksum */
-				ETX };
+		byte[] bytes = concat(
+				("" + STX + "01" + COLON + "001" + TAB).getBytes(),
+				("010" + COLON + "username" + TAB).getBytes(),
+				("011" + COLON + "password" + TAB).getBytes(),
+				("CS"/* two-bytes for checksum */ + ETX).getBytes());
 		int checksum = calculateCheckSum(Arrays.copyOfRange(bytes, 0, bytes.length - 3));
 		bytes[bytes.length - 3] = (byte) (checksum & 0xFF00 >> 8);
 		bytes[bytes.length - 2] = (byte) (checksum & 0x00FF);
@@ -182,6 +174,45 @@ public class PacketSerializerTest {
 			System.out.println(e.getMessage());
 			throw e;
 		}
+	}
+
+	private static byte[] concat(byte[]... arrays) {
+		if (arrays.length == 0) {
+			throw new IllegalArgumentException("No arrays to concat");
+		}
+		if (arrays.length == 1) {
+			return arrays[0];
+		}
+		int totalLength = 0;
+		for (int i = 0; i < arrays.length; i++) {
+			totalLength += arrays[i].length;
+		}
+	    final byte[] result = (byte[]) java.lang.reflect.Array.
+	            newInstance(arrays[0].getClass().getComponentType(), totalLength);
+	    int offset = 0;
+	    for (byte[] a : arrays) {
+		    System.arraycopy(a, 0, result, offset, a.length);
+		    offset += a.length;
+		}
+	    return result;
+	}
+
+	@Ignore("Escaping characters should be done via UserData implementation")
+	@Test
+	public void deserializeUserDataParameter() throws Exception {
+		byte[] bytes = concat(
+				("" + STX + "03:001" + TAB).getBytes("ASCII"),
+				("033:_XX( curly braces _XX) _XX< square brackets _XX>" + TAB).getBytes("ASCII"),
+				("CS"/* two-bytes for checksum */ + ETX).getBytes("ASCII"));
+		int checksum = calculateCheckSum(Arrays.copyOfRange(bytes, 0, bytes.length - 3));
+		String checkSumHexString = Integer.toHexString(checksum).toUpperCase();
+		bytes[bytes.length - 3] = (byte) checkSumHexString.charAt(0);
+		bytes[bytes.length - 2] = (byte) checkSumHexString.charAt(1);
+		ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
+		Packet command = new Packet(3, 1,
+				new Parameter(33, "{ curly braces } [ square brackets ]"));
+		Packet actual = serializer.deserialize(inputStream);
+		assertEquals(command, actual);
 	}
 
 }

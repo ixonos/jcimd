@@ -21,6 +21,7 @@ import java.io.OutputStream;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -61,11 +62,11 @@ import org.apache.commons.logging.LogFactory;
  */
 public class PacketSerializer {
 
-	public static final char STX = 0x02;
-	public static final char TAB = '\t'; // ASCII value is 9
-	public static final char COLON = ':'; // ASCII value is 58
-	public static final char ETX = 0x03;
-	public static final char NUL = 0x00;
+	public static final byte STX = 0x02;
+	public static final byte TAB = '\t'; // ASCII value is 9
+	public static final byte COLON = ':'; // ASCII value is 58
+	public static final byte ETX = 0x03;
+	public static final byte NUL = 0x00;
 	public static final int END_OF_STREAM = -1;
 
 	private static final int DEFAULT_MAX_SIZE = 1024 * 4;
@@ -139,7 +140,8 @@ public class PacketSerializer {
 		outputStream.write(bytes);
 		if (this.useChecksum) {
 			int checkSum = calculateCheckSum(bytes);
-			outputStream.write(Integer.toHexString(checkSum).toUpperCase().getBytes());
+			AsciiUtils.writeStringAsAsciiBytes(StringUtils.leftPad(
+					Integer.toHexString(checkSum), 2, '0'), outputStream);
 		}
 		outputStream.write(ETX);
 	}
@@ -147,7 +149,8 @@ public class PacketSerializer {
 	private byte[] serializeToByteArray(Packet packet) throws IOException {
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 		outputStream.write(STX);
-		outputStream.write(String.format("%02d", packet.getOperationCode()).getBytes("ascii"));
+		AsciiUtils.writeIntAsAsciiBytes(
+				packet.getOperationCode(), outputStream, 2);
 		outputStream.write(COLON);
 		Integer sequenceNumber = packet.getSequenceNumber();
 		if (sequenceNumber == null) {
@@ -161,17 +164,21 @@ public class PacketSerializer {
 				}
 			} else {
 				String message = "No sequence number generator. " +
-						"Please see PacketSerializer#setSequenceNumberGenerator(PacketSequenceNumberGenerator)";
+						"Please see PacketSerializer#setSequenceNumberGenerator(" +
+						"PacketSequenceNumberGenerator)";
 				logger.error(message);
 				throw new IOException(message);
 			}
 		}
-		outputStream.write(String.format("%03d", sequenceNumber).getBytes("ascii"));
+		AsciiUtils.writeIntAsAsciiBytes(
+				sequenceNumber, outputStream, 3);
 		outputStream.write(TAB);
 		for (Parameter parameter : packet.getParameters()) {
-			outputStream.write(String.format("%03d", parameter.getNumber()).getBytes("ascii"));
+			AsciiUtils.writeIntAsAsciiBytes(
+					parameter.getNumber(), outputStream, 3);
 			outputStream.write(COLON);
-			outputStream.write(parameter.getValue().getBytes("ascii"));
+			AsciiUtils.writeStringAsAsciiBytes(
+					parameter.getValue(), outputStream);
 			outputStream.write(TAB);
 		}
 		return outputStream.toByteArray();
@@ -248,7 +255,7 @@ public class PacketSerializer {
 
 		if (useChecksum) {
 			// Read two (2) bytes, just before the ETX byte.
-			StringBuilder buffer = new StringBuilder();
+			StringBuilder buffer = new StringBuilder(2);
 			buffer.append((char) bytes[bytes.length - 3]);
 			buffer.append((char) bytes[bytes.length - 2]);
 			try {
@@ -324,7 +331,7 @@ public class PacketSerializer {
 	 */
 	private int readToBufferUntil(
 			byte[] bytes, int from, int to, int maxOffset,
-			StringBuilder buffer, char delimiter)
+			StringBuilder buffer, byte delimiter)
 	throws IOException {
 		int i = from;
 		while ((i < to) && (bytes[i] != delimiter)
