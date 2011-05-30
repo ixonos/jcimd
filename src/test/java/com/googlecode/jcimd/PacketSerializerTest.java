@@ -74,7 +74,8 @@ public class PacketSerializerTest {
 				("011" + COLON + "password" + TAB).getBytes(),
 				("CS"/* two-bytes for checksum */ + ETX).getBytes());
 		int checksum = calculateCheckSum(Arrays.copyOfRange(expected, 0, expected.length - 3));
-		String checkSumHexString = String.format("%02x", checksum);
+		// check sum needs to be 0-9 A-F (upper-case)
+		String checkSumHexString = String.format("%02X", checksum);
 		expected[expected.length - 3] = (byte) checkSumHexString.charAt(0);
 		expected[expected.length - 2] = (byte) checkSumHexString.charAt(1);
 		serializer.serialize(command, outputStream);

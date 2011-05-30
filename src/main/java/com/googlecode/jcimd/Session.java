@@ -65,7 +65,6 @@ public interface Session {
 	 * @param destinationAddress
 	 * @param originatingAddress
 	 * @param alphanumericOriginatingAddress
-	 * @param dataCodingScheme
 	 * @param userData
 	 * @param moreMessagesToSend
 	 * @param validityPeriod
@@ -83,7 +82,6 @@ public interface Session {
 	 */
 	String submitMessage(String destinationAddress,
 			String originatingAddress, String alphanumericOriginatingAddress,
-			Integer dataCodingScheme,
 			UserData userData,
 			Boolean moreMessagesToSend,
 			TimePeriod validityPeriod,

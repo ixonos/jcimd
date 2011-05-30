@@ -107,7 +107,6 @@ public class DefaultSession implements Session {
 	@Override
 	public String submitMessage(String destinationAddress,
 			String originatingAddress, String alphanumericOriginatingAddress,
-			Integer dataCodingScheme,
 			UserData userData,
 			Boolean moreMessagesToSend,
 			TimePeriod validityPeriod,
@@ -124,9 +123,9 @@ public class DefaultSession implements Session {
 		parameters.add(new Parameter(Parameter.DESTINATION_ADDRESS, destinationAddress));
 		addParameterIfNotNull(Parameter.ORIGINATING_ADDRESS, originatingAddress, parameters);
 		addParameterIfNotNull(Parameter.ALPHANUMERIC_ORIGINATING_ADDRESS, alphanumericOriginatingAddress, parameters);
-		addParameterIfNotNull(Parameter.DATA_CODING_SCHEME, dataCodingScheme, parameters);
 
 		if (userData != null) {
+			addParameterIfNotNull(Parameter.DATA_CODING_SCHEME, userData.getDataCodingScheme(), parameters);
 			addParameterIfNotNull(Parameter.USER_DATA_HEADER, userData.getHeader(), parameters);
 			if (!userData.isBodyBinary()) {
 				// TODO: Use UserData#getBody() that returns byte[]

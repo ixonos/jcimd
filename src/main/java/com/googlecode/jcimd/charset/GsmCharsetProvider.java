@@ -165,4 +165,27 @@ public class GsmCharsetProvider extends CharsetProvider {
 		return GsmCharsetProvider.charsets.iterator();
 	}
 
+	/**
+	 * Returns <code>true</code> if the given character sequence
+	 * <em>does not</em> contain any characters that cannot be encoded in
+	 * the GSM 3.38 default alphabet. In other words, if this
+	 * returns <code>true</code>, the given character sequence can
+	 * be safely encoded into GSM 3.38. Otherwise, it cannot be
+	 * safely encoded without loosing data.
+	 *
+	 * @param s the given character sequence
+	 * @return <code>true</code> if the given character sequence
+	 * does not contain any characters that cannot be encoded in
+	 * the GSM 3.38 default alphabet
+	 */
+	public static boolean noNonGsmCharacters(CharSequence s) {
+		int length = s.length();
+		for (int i = 0; i < length; i++) {
+			if (CHAR_TO_BYTE_SMALL_C_CEDILLA[s.charAt(i)] == NO_GSM_BYTE) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 }

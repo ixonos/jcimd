@@ -143,7 +143,7 @@ public class PacketSerializer {
 		if (this.useChecksum) {
 			int checkSum = calculateCheckSum(bytes);
 			AsciiUtils.writeStringAsAsciiBytes(StringUtils.leftPad(
-					Integer.toHexString(checkSum), 2, '0'), outputStream);
+					Integer.toHexString(checkSum).toUpperCase(), 2, '0'), outputStream);
 		}
 		outputStream.write(ETX);
 	}

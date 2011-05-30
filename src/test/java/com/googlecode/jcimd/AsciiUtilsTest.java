@@ -80,11 +80,20 @@ public class AsciiUtilsTest {
 	}
 
 	@Test
-	public void serializeAsAsciiBytesLeftPaddedWithZeroes() throws Exception {
+	public void serializeIntAsAsciiBytesLeftPaddedWithTwoZeroes() throws Exception {
 		final int in = 1;
 		ByteArrayOutputStream out = new ByteArrayOutputStream(20);
 		AsciiUtils.writeIntAsAsciiBytes(in, out, 2);
 		final byte[] expecteds = new byte[] { '0', '1' };
+		assertArrayEquals(expecteds, out.toByteArray());
+	}
+
+	@Test
+	public void serializeIntAsAsciiBytesLeftPaddedWithThreeZeroes() throws Exception {
+		final int in = 2;
+		ByteArrayOutputStream out = new ByteArrayOutputStream(20);
+		AsciiUtils.writeIntAsAsciiBytes(in, out, 3);
+		final byte[] expecteds = new byte[] { '0', '0', '2' };
 		assertArrayEquals(expecteds, out.toByteArray());
 	}
 

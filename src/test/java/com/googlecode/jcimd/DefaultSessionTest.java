@@ -86,7 +86,6 @@ public class DefaultSessionTest {
 			String destinationAddress = "+19098858888";
 			String originatingAddress = null;
 			String alphanumericOriginatingAddress = null;
-			Integer dataCodingScheme = null;
 			UserData userData = new StringUserData("Hi there");
 			Boolean moreMessagesToSend = null;
 			TimePeriod validityPeriod = null;
@@ -102,7 +101,6 @@ public class DefaultSessionTest {
 			session.submitMessage(
 					destinationAddress,
 					originatingAddress, alphanumericOriginatingAddress,
-					dataCodingScheme,
 					userData,
 					moreMessagesToSend,
 					validityPeriod,
