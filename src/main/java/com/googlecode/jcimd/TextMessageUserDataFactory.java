@@ -57,10 +57,31 @@ public class TextMessageUserDataFactory {
 		return bytes;
 	}
 
+	/**
+	 * Creates an array of one or more {@link UserData} objects that represent the given
+	 * text message. This method does the splitting of messages (when over 140 bytes).
+	 * It also handles GSM 7-bit default alphabet encoding when possible.
+	 * Otherwise, UCS-2 (UTF-16 BE) encoding is used.
+	 *
+	 * @param textMessage the text message to be sent
+	 * @return an array of one or more {@link UserData} objects that represent the given
+	 * text message
+	 */
 	public static UserData[] newInstance(String textMessage) {
 		return newInstance(textMessage, 140);
 	}
 
+	/**
+	 * Creates an array of one or more {@link UserData} objects that represent the given
+	 * text message. This method does the splitting of messages (when over the given
+	 * part length bytes). It also handles GSM 7-bit default alphabet encoding when possible.
+	 * Otherwise, UCS-2 (UTF-16 BE) encoding is used.
+	 *
+	 * @param textMessage the text message to be sent
+	 * @param partLength the given maximum number of bytes for each part
+	 * @return an array of one or more {@link UserData} objects that represent the given
+	 * text message
+	 */
 	public static UserData[] newInstance(String textMessage, int partLength) {
 		final int headerLength = 6;
 		int textMessageBytes = 0;
