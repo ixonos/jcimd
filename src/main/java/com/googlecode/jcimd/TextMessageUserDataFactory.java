@@ -19,6 +19,10 @@ package com.googlecode.jcimd;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.CharsetEncoder;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import com.googlecode.jcimd.charset.GsmCharsetProvider;
 
@@ -29,28 +33,124 @@ import com.googlecode.jcimd.charset.GsmCharsetProvider;
  */
 public class TextMessageUserDataFactory {
 
-	public static UserData newInstance(String textMessage) {
-		ByteBuffer byteBuffer = ByteBuffer.allocate(textMessage.length() * 2);
-		byte[] bytes;
-		if (GsmCharsetProvider.noNonGsmCharacters(textMessage)) {
-			// Encode the text message to GSM 3.38 (7-bit default alphabet) septets.
-			Charset.forName("GSM").newEncoder().encode(
-					CharBuffer.wrap(textMessage), byteBuffer, true);
-			//System.out.println(byteBuffer.position());
-			bytes = new byte[byteBuffer.position()];
-			byteBuffer.flip();
-			//System.out.println(byteBuffer.position());
-			byteBuffer.get(bytes);
-			return new BinaryUserData(bytes, null, 0x00);
+	private static final Log logger = LogFactory.getLog(TextMessageUserDataFactory.class);
+	private static final Charset GSM = Charset.forName("GSM");
+	private static final Charset UTF16BE = Charset.forName("UTF-16BE");
+
+	static {
+		if (logger.isDebugEnabled()) {
+			logger.debug("GSM max. bytes per char: "
+					+ (int) Math.ceil(GSM.newEncoder().maxBytesPerChar()));
+			logger.debug("UTF-16BE max. bytes per char: "
+					+ (int) Math.ceil(UTF16BE.newEncoder().maxBytesPerChar()));
 		}
-		Charset.forName("UTF-16BE").newEncoder().encode(
-				CharBuffer.wrap(textMessage), byteBuffer, true);
-		//System.out.println(byteBuffer.position());
-		bytes = new byte[byteBuffer.position()];
+	}
+
+	private static byte[] encodeAs(Charset charset, String textMessage) {
+		CharsetEncoder encoder = charset.newEncoder(); 
+		ByteBuffer byteBuffer = ByteBuffer.allocate(
+				textMessage.length() * (int) Math.ceil(encoder.maxBytesPerChar()));
+		encoder.encode(CharBuffer.wrap(textMessage), byteBuffer, true);
+		byte[] bytes = new byte[byteBuffer.position()];
 		byteBuffer.flip();
-		//System.out.println(byteBuffer.position());
 		byteBuffer.get(bytes);
-		return new BinaryUserData(bytes, null, 0x08);
+		return bytes;
+	}
+
+	public static UserData[] newInstance(String textMessage) {
+		return newInstance(textMessage, 140);
+	}
+
+	public static UserData[] newInstance(String textMessage, int partLength) {
+		final int headerLength = 6;
+		int textMessageBytes = 0;
+		boolean noNonGsmCharacters = true;
+		textMessageBytes = GsmCharsetProvider.countGsm7BitCharacterBytes(textMessage);
+		if (textMessageBytes == -1) {
+			// textMessage contains characters not in GSM 3.38 default alphabet
+			textMessageBytes = textMessage.getBytes(UTF16BE).length;
+			noNonGsmCharacters = false;
+		}
+		int numberOfParts = 1;
+		int actualPartLength = partLength;
+		if (textMessageBytes > partLength) {
+			actualPartLength = partLength - headerLength;
+			numberOfParts = (textMessageBytes + actualPartLength - 1) / actualPartLength;
+		}
+		if (numberOfParts > 255) {
+			throw new IllegalArgumentException(
+					"textMessage is too long to fit in a max. of 255 parts (max. "
+					+ partLength + " for each part)");
+		}
+		UserData[] uds = new UserData[numberOfParts];
+		if (numberOfParts > 1) {
+			if (logger.isDebugEnabled()) {
+				logger.debug("Splitting " + textMessageBytes + " bytes to " + numberOfParts + " parts");
+			}
+			byte[] udh, udhTemplate = new byte[] {
+					0x05, 0x00, 0x03, 0x01 /* generate unique id */,
+					(byte) (numberOfParts & 0xff), 0x00
+			};
+			if (noNonGsmCharacters) {
+				int i = 0, part = 0;
+				StringBuilder textMessagePart = new StringBuilder();
+				while (i < textMessage.length()) {
+					int textMessagePartBits = 0;
+					textMessagePart.setLength(0);
+					while (i < textMessage.length()
+							&& (textMessagePartBits / 8) < actualPartLength) {
+						char ch = textMessage.charAt(i);
+						int chBits = GsmCharsetProvider.countGsm7BitCharacterBits(ch);
+						if (((textMessagePartBits + 8 + chBits - 1) / 8) > actualPartLength) {
+							// if the next character can no longer be added
+							// to this part without exceeding max. part length
+							break;
+						}
+						textMessagePart.append(ch);
+						textMessagePartBits += chBits;
+						i++;
+					}
+					String textMessagePartString = textMessagePart.toString();
+					if (logger.isDebugEnabled()) {
+						logger.debug("Part " + (part + 1) + " ["
+								+ textMessagePartString + "]");
+					}
+					udh = udhTemplate.clone();
+					udh[5] = (byte) ((part + 1) & 0xff);
+					uds[part++] = new BinaryUserData(
+							encodeAs(GSM, textMessagePartString), udh, 0x00);
+				}
+			} else {
+				int i = 0, part = 0;
+				StringBuilder textMessagePart = new StringBuilder();
+				while (i < textMessage.length()) {
+					textMessagePart.setLength(0);
+					while (i < textMessage.length()
+							&& textMessagePart.toString().getBytes(UTF16BE).length < actualPartLength) {
+						textMessagePart.append(textMessage.charAt(i));
+						i++;
+					}
+					String textMessagePartString = textMessagePart.toString();
+					if (logger.isDebugEnabled()) {
+						logger.debug("Part " + (part + 1) + " ["
+								+ textMessagePartString + "]");
+					}
+					udh = udhTemplate.clone();
+					udh[5] = (byte) ((part + 1) & 0xff);
+					uds[part++] = new BinaryUserData(
+							encodeAs(UTF16BE, textMessagePartString), udh, 0x08);
+				}
+			}
+		} else {
+			if (noNonGsmCharacters) {
+				// Encode the text message to GSM 3.38 (7-bit default alphabet) septets.
+				uds[0] = new BinaryUserData(encodeAs(GSM, textMessage), null, 0x00);
+			} else {
+				uds[0] = new BinaryUserData(encodeAs(UTF16BE, textMessage), null, 0x08);
+			}
+		}
+
+		return uds; 
 	}
 
 }

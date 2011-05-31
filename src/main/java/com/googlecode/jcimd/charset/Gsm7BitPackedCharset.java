@@ -72,9 +72,6 @@ public class Gsm7BitPackedCharset extends Charset {
 		protected CoderResult encodeLoop(CharBuffer in, ByteBuffer out) {
 			int remaining = in.remaining();
 			while (remaining > 0) {
-				if (out.remaining() < 1) {
-					return CoderResult.OVERFLOW;
-				}
 				char ch = in.get();
 				int b = CHAR_TO_BYTE[ch];
 				if (b == GsmCharsetProvider.NO_GSM_BYTE) {
@@ -89,6 +86,9 @@ public class Gsm7BitPackedCharset extends Charset {
 				data |= ((b & 0xFF) << nBits);
 				nBits += 7;
 				while (nBits >= 8) {
+					if (out.remaining() < 1) {
+						return CoderResult.OVERFLOW;
+					}
 					out.put((byte) (data & 0xFF));
 					data >>>= 8;
 					nBits -= 8;

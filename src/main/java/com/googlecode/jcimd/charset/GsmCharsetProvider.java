@@ -132,6 +132,7 @@ public class GsmCharsetProvider extends CharsetProvider {
 					CHAR_TO_BYTE_SMALL_C_CEDILLA,
 					BYTE_TO_CHAR_ESCAPED_DEFAULT),
 				new Gsm8BitUnpackedCharset("GSM-8BIT", new String[] {
+						// no aliases
 					},
 					BYTE_TO_CHAR_SMALL_C_CEDILLA,
 					CHAR_TO_BYTE_SMALL_C_CEDILLA,
@@ -166,26 +167,49 @@ public class GsmCharsetProvider extends CharsetProvider {
 	}
 
 	/**
-	 * Returns <code>true</code> if the given character sequence
-	 * <em>does not</em> contain any characters that cannot be encoded in
-	 * the GSM 3.38 default alphabet. In other words, if this
-	 * returns <code>true</code>, the given character sequence can
-	 * be safely encoded into GSM 3.38. Otherwise, it cannot be
-	 * safely encoded without loosing data.
+	 * Returns the number of bytes needed to encode the given character
+	 * sequence as GSM 3.38 (7-bit) default alphabet. Returns -1 if the
+	 * given sequence contains a character that cannot be encoded.
 	 *
 	 * @param s the given character sequence
-	 * @return <code>true</code> if the given character sequence
-	 * does not contain any characters that cannot be encoded in
-	 * the GSM 3.38 default alphabet
+	 * @return the number of bytes needed to encode the given character
+	 * sequence as GSM 3.38 (7-bit) default alphabet. Otherwise, -1 is
+	 * returned.
 	 */
-	public static boolean noNonGsmCharacters(CharSequence s) {
+	public static int countGsm7BitCharacterBytes(CharSequence s) {
 		int length = s.length();
+		int totalBits = 0, bits = 0;
 		for (int i = 0; i < length; i++) {
-			if (CHAR_TO_BYTE_SMALL_C_CEDILLA[s.charAt(i)] == NO_GSM_BYTE) {
-				return false;
+			bits = countGsm7BitCharacterBits(s.charAt(i));
+			if (bits < 0) {
+				return -1;
 			}
+			totalBits += bits;
 		}
-		return true;
+		// Divide bits by 8 rounding up
+		// (bits + 8 - 1) / 8
+		return (totalBits + 7) / 8;
 	}
 
+	/**
+	 * Returns number of bits needed to encode the given character
+	 * as GSM 3.38 (7-bit) default alphabet. Returns -1 if the
+	 * given character cannot be encoded.
+	 * 
+	 * @param ch the given character
+	 * @return number of bits needed to encode the given character
+	 * as GSM 3.38 (7-bit) default alphabet. Returns -1 if the
+	 * given character cannot be encoded.
+	 */
+	public static int countGsm7BitCharacterBits(char ch) {
+		int bits = 0;
+		if (CHAR_TO_BYTE_SMALL_C_CEDILLA[ch] == NO_GSM_BYTE) {
+			return -1;
+		}
+		bits += 7;
+		if (CHAR_TO_BYTE_SMALL_C_CEDILLA[ch] > 0xFF) {
+			bits += 7;
+		}
+		return bits;
+	}
 }
