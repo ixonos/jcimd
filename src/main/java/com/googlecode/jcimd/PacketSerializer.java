@@ -23,7 +23,6 @@ import java.io.OutputStream;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -142,8 +141,7 @@ public class PacketSerializer {
 		outputStream.write(bytes);
 		if (this.useChecksum) {
 			int checkSum = calculateCheckSum(bytes);
-			AsciiUtils.writeStringAsAsciiBytes(StringUtils.leftPad(
-					Integer.toHexString(checkSum).toUpperCase(), 2, '0'), outputStream);
+			AsciiUtils.writeIntAsHexAsciiBytes(checkSum, outputStream, 2);
 		}
 		outputStream.write(ETX);
 	}

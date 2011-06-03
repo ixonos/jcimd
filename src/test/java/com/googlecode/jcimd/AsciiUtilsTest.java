@@ -37,7 +37,7 @@ public class AsciiUtilsTest {
 	}
 
 	@Test
-	public void serializeAsAsciiBytes() throws Exception {
+	public void serializeStringAsAsciiBytes() throws Exception {
 		final String data = "abc123";
 		final Charset asciiCharset = Charset.forName("US-ASCII");
 		final int loops = 1000;
@@ -67,7 +67,7 @@ public class AsciiUtilsTest {
 	}
 
 	@Test
-	public void serializeAsHexAsciiBytes() throws Exception {
+	public void serializeByteArrayAsHexAsciiBytes() throws Exception {
 		final byte[] bytes = new byte[] { 
 				(byte) 0x00, (byte) 0x01, (byte) 0xAB, (byte) 0xCD, (byte) 0xEF
 		};
@@ -94,6 +94,18 @@ public class AsciiUtilsTest {
 		ByteArrayOutputStream out = new ByteArrayOutputStream(20);
 		AsciiUtils.writeIntAsAsciiBytes(in, out, 3);
 		final byte[] expecteds = new byte[] { '0', '0', '2' };
+		assertArrayEquals(expecteds, out.toByteArray());
+	}
+
+	@Test
+	public void serializeIntAsHexAsciiBytesLeftPaddedWithTwoZeroes() throws Exception {
+		ByteArrayOutputStream out = new ByteArrayOutputStream(20);
+		AsciiUtils.writeIntAsHexAsciiBytes(10, out, 2);
+		byte[] expecteds = new byte[] { '0', 'A' };
+		assertArrayEquals(expecteds, out.toByteArray());
+		out.reset();
+		AsciiUtils.writeIntAsHexAsciiBytes(27, out, 2);
+		expecteds = new byte[] { '1', 'B' };
 		assertArrayEquals(expecteds, out.toByteArray());
 	}
 

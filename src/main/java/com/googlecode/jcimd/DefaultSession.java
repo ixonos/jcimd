@@ -17,17 +17,11 @@
 package com.googlecode.jcimd;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.Socket;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 /**
  * Default {@link Session CIMD session} implementation.
@@ -35,72 +29,62 @@ import org.apache.commons.logging.LogFactory;
  */
 public class DefaultSession implements Session {
 
-	private final Log logger = LogFactory.getLog(this.getClass());
+	private ConnectionFactory connectionFactory;
+	private Connection connection;
 
-	private String host;
-	private int port;
-
-	private Socket socket;
-	private InputStream inputStream;
-	private OutputStream outputStream;
-	
-	private PacketSerializer serializer;
-
-	public DefaultSession(String host, int port, String username, String password)
-	throws IOException, SessionException {
-		this.host = host;
-		this.port = port;
-		this.socket = new Socket(host, port);
-		if (this.logger.isDebugEnabled()) {
-			this.logger.debug("Connected to " + host + ":" + port);
+	public DefaultSession(ConnectionFactory connectionFactory) {
+		if (connectionFactory == null) {
+			throw new IllegalArgumentException("connectionFactory cannot be null");
 		}
-		this.inputStream = this.socket.getInputStream();
-		this.outputStream = this.socket.getOutputStream();
-		this.serializer = new PacketSerializer(this.getClass().getSimpleName());
-		this.serializer.setSequenceNumberGenerator(
-				new ApplicationPacketSequenceNumberGenerator());
-		login(username, password);
+		this.connectionFactory = connectionFactory;
 	}
 
-	public String getHost() {
-		return host;
-	}
-
-	public int getPort() {
-		return port;
-	}
-
-	private Packet send(Packet packet) throws IOException, SessionException {
-		this.serializer.serialize(packet, this.outputStream);
-		Packet response = this.serializer.deserialize(this.inputStream);
-		if (!response.isPositiveResponse()) {
-			throw new NonPositiveResponseException(
-					Integer.valueOf(response.getParameter(900).getValue()),
-					response.getParameter(901).getValue());
+	private Packet send(Packet packet) throws SessionException {
+		if (this.connection == null || this.connection.isClosed()) {
+			try {
+				this.connection = this.connectionFactory.getConnection();
+			} catch (Exception e) {
+				throw new SessionException("Failed to get a connection", e);
+			}
 		}
-		return response;
+		try {
+			Packet response = this.connection.send(packet);
+			if (!response.isPositiveResponse()) {
+				/*
+				if (response.isNack()) {
+					throw new NackException();
+				} else if (response.hasErrorCodeParameter()) {
+					throw new NegativeResponseException(response);
+				}
+				*/
+				throw new NonPositiveResponseException(
+						Integer.valueOf(response.getParameter(900).getValue()),
+						response.getParameter(901).getValue());
+			}
+			return response;
+		} catch (Exception e) {
+			try {
+				closeConnection();
+			} catch (IOException ioe2) {
+				// TODO: handle exception
+			}
+			throw new SessionException(e);
+		}
 	}
 
-	private void login(String username, String password)
-	throws IOException, SessionException {
-		send(new Packet(Packet.OP_LOGIN,
-				new Parameter(Parameter.USER_IDENTITY, username),
-				new Parameter(Parameter.PASSWORD, password)));
-	}
-
-	private void logout() throws IOException, SessionException {
-		send(new Packet(Packet.OP_LOGOUT));
+	private void closeConnection() throws IOException {
+		if (this.connection != null) {
+			this.connection.close();
+		}
+		this.connection = null;
 	}
 
 	@Override
 	public void close() throws SessionException {
 		try {
-			logout();
-			if (this.socket != null) {
-				this.socket.close();
-			}
+			closeConnection();
 		} catch (IOException e) {
-			e.printStackTrace();
+			throw new SessionException(e);
 		}
 	}
 
@@ -128,10 +112,8 @@ public class DefaultSession implements Session {
 			addParameterIfNotNull(Parameter.DATA_CODING_SCHEME, userData.getDataCodingScheme(), parameters);
 			addParameterIfNotNull(Parameter.USER_DATA_HEADER, userData.getHeader(), parameters);
 			if (!userData.isBodyBinary()) {
-				// TODO: Use UserData#getBody() that returns byte[]
 				addParameterIfNotNull(Parameter.USER_DATA, userData.getBody(), parameters);
 			} else {
-				// TODO: Use UserData#getBody() that returns byte[]
 				addParameterIfNotNull(Parameter.USER_DATA_BINARY, userData.getBinaryBody(), parameters);
 			}
 		}

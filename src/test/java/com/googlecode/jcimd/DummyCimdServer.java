@@ -62,8 +62,9 @@ public class DummyCimdServer {
 					while (!Thread.currentThread().isInterrupted()) {
 						try {
 							Socket socket = serverSocket.accept();
+							socket.setSoTimeout(2000);
 							if (logger.isInfoEnabled()) {
-								logger.info("Starting session with " + socket.getInetAddress().getHostAddress());
+								logger.info("Starting session with " + socket.getInetAddress().getHostAddress() + ":" + socket.hashCode());
 							}
 							DummyCimdServer.Session session = new Session(socket);
 							//List<Session> sessions = ...;
@@ -110,11 +111,13 @@ public class DummyCimdServer {
 						&& !this.socket.isClosed()) {
 					Packet request = null;
 					try {
-						request = serializer.deserialize(this.inputStream);
-					} catch (IOException e) {
-						System.out.println(e.getMessage());
 						if (logger.isInfoEnabled()) {
-							logger.info("Ending session with " + socket.getInetAddress().getHostAddress());
+							logger.info("Waiting for requests...");
+						}
+						request = serializer.deserialize(this.inputStream);
+					} catch (Exception e) {
+						if (logger.isErrorEnabled()) {
+							logger.error(e);
 						}
 						break;
 					}
@@ -127,6 +130,7 @@ public class DummyCimdServer {
 					// same as the request message.
 					case Packet.OP_LOGIN:
 					case Packet.OP_LOGOUT:
+					case Packet.OP_ALIVE:
 						response = new Packet(
 								request.getOperationCode() + 50,
 								request.getSequenceNumber());
@@ -142,6 +146,13 @@ public class DummyCimdServer {
 						break;
 					}
 					serializer.serialize(response, this.outputStream);
+					if (request.getOperationCode() == Packet.OP_LOGOUT) {
+						break;
+					}
+				}
+				if (logger.isInfoEnabled()) {
+					// close this session
+					logger.info("Ending session with " + socket.getInetAddress().getHostAddress() + ":" + socket.hashCode());
 				}
 			} catch (Exception e) {
 				throw new RuntimeException(e);

@@ -38,9 +38,12 @@ public class DefaultSessionTest {
 	private static DummyCimdServer server;
 	private static int port = 9971;
 	private static String host = "localhost";
+
 	private String username = "user01";
 	private String password = "seCreT";
 	private Session session;
+
+	private ConnectionFactory connectionFactory;
 
 	@BeforeClass
 	public static void setUpCimd2Server() throws Exception {
@@ -55,6 +58,8 @@ public class DefaultSessionTest {
 
 	@Before
 	public void setUp() throws Exception {
+		connectionFactory = new TcpNetConnectionFactory(
+				host, port, username, password);
 	}
 
 	@After
@@ -62,66 +67,85 @@ public class DefaultSessionTest {
 		server.getReceivedCommands().clear();
 	}
 
-	@Test
-	public void testLogin() throws Exception {
-		new DefaultSession(host, port, username, password);
-		assertEquals("Login message expected", 1, server.getReceivedCommands().size());
-		assertEquals("Login message expected", 1, server.getReceivedCommands().get(0).getOperationCode());
-	}
+	private void submitMessage(String destinationAddress, UserData userData) throws Exception {
+		String originatingAddress = null;
+		String alphanumericOriginatingAddress = null;
+		Boolean moreMessagesToSend = null;
+		TimePeriod validityPeriod = null;
+		Integer protocolIdentifier = null;
+		TimePeriod firstDeliveryTime = null;
+		Boolean replyPathEnabled = null;
+		Integer statusReportRequest = null;
+		Boolean cancelEnabled = null;
+		Integer tariffClass = null;
+		Integer serviceDescription = null;
+		Integer priority = null;
 
-	@Test
-	public void testLogout() throws Exception {
-		session = new DefaultSession(host, port, username, password);
-		server.getReceivedCommands().clear();
-		session.close();
-		assertEquals("Logout message expected", 1, server.getReceivedCommands().size());
-		assertEquals("Logout message expected", 2, server.getReceivedCommands().get(0).getOperationCode());
+		session.submitMessage(
+				destinationAddress,
+				originatingAddress, alphanumericOriginatingAddress,
+				userData,
+				moreMessagesToSend,
+				validityPeriod,
+				protocolIdentifier,
+				firstDeliveryTime,
+				replyPathEnabled,
+				statusReportRequest,
+				cancelEnabled,
+				tariffClass,
+				serviceDescription,
+				priority);
 	}
 
 	@Test
 	public void testSubmitMessage() throws Exception {
-		session = new DefaultSession(host, port, username, password);
-		server.getReceivedCommands().clear();
+		session = new DefaultSession(connectionFactory);
 		try {
 			String destinationAddress = "+19098858888";
-			String originatingAddress = null;
-			String alphanumericOriginatingAddress = null;
 			UserData userData = new StringUserData("Hi there");
-			Boolean moreMessagesToSend = null;
-			TimePeriod validityPeriod = null;
-			Integer protocolIdentifier = null;
-			TimePeriod firstDeliveryTime = null;
-			Boolean replyPathEnabled = null;
-			Integer statusReportRequest = null;
-			Boolean cancelEnabled = null;
-			Integer tariffClass = null;
-			Integer serviceDescription = null;
-			Integer priority = null;
+			
+			submitMessage(destinationAddress, userData);
 
-			session.submitMessage(
-					destinationAddress,
-					originatingAddress, alphanumericOriginatingAddress,
-					userData,
-					moreMessagesToSend,
-					validityPeriod,
-					protocolIdentifier,
-					firstDeliveryTime,
-					replyPathEnabled,
-					statusReportRequest,
-					cancelEnabled,
-					tariffClass,
-					serviceDescription,
-					priority);
-			assertEquals("Submit message expected", 1, server.getReceivedCommands().size());
-			assertEquals("Submit message expected", 3, server.getReceivedCommands().get(0).getOperationCode());
+			assertEquals("Two message expected", 2, server.getReceivedCommands().size());
+			assertEquals("Login message expected", 1, server.getReceivedCommands().get(0).getOperationCode());
+			Packet submitMessagePacket = server.getReceivedCommands().get(1);
+			assertEquals("Submit message expected", 3, submitMessagePacket.getOperationCode());
 			assertEquals("Destination address parameter expected",
-					destinationAddress, server.getReceivedCommands().get(0).getParameter(21).getValue());
+					destinationAddress, submitMessagePacket.getParameter(21).getValue());
 			assertEquals("User data parameter expected",
-					userData.getBody(), server.getReceivedCommands().get(0).getParameter(33).getValue());
+					userData.getBody(), submitMessagePacket.getParameter(33).getValue());
 		} catch (Exception e) {
 			fail("Unexpected exception: " + e.getMessage());
 		} finally {
+			server.getReceivedCommands().clear();
 			session.close();
+			assertEquals("One message expected", 1, server.getReceivedCommands().size());
+			assertEquals("Logout message expected", 2, server.getReceivedCommands().get(0).getOperationCode());
+		}
+	}
+
+	@Test
+	public void reconnectsAfterServerDisconnectsDueToInactivity() throws Exception {
+		session = new DefaultSession(connectionFactory);
+		try {
+			String destinationAddress = "+19098858888";
+			UserData userData = new StringUserData("Hi there");
+			
+			submitMessage(destinationAddress, userData);
+
+			System.out.println("Pausing for server to disconnect...");
+			Thread.sleep(3000);
+
+			// The session should get a new connection from connection factory
+			submitMessage(destinationAddress, userData);
+
+		} catch (Exception e) {
+			fail("Unexpected exception: " + e.getMessage());
+		} finally {
+			server.getReceivedCommands().clear();
+			session.close();
+			assertEquals("One message expected", 1, server.getReceivedCommands().size());
+			assertEquals("Logout message expected", 2, server.getReceivedCommands().get(0).getOperationCode());
 		}
 	}
 }

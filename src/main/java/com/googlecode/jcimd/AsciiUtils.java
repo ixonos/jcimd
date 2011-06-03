@@ -36,6 +36,7 @@ import java.io.OutputStreamWriter;
 public final class AsciiUtils {
 
 	public static final byte ZERO_ASCII_BYTE_VALUE = '0'; // 48
+	public static final byte UPPERCASE_LETTER_A_ASCII_BYTE_VALUE = 'A'; // 65
 
 	/**
 	 * Writes the given {@link String string} as ASCII bytes (0-127)
@@ -93,6 +94,10 @@ public final class AsciiUtils {
 		1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000 
 	};
 
+	private static final int[] HEX_SIZE_TABLE = new int[] {
+		0x01, 0x010, 0x0100, 0x01000, 0x010000, 0x0100000, 0x01000000, 0x010000000 
+	};
+
 	/**
 	 * Writes the given integer as ASCII characters ('0'-'9') to the
 	 * given output stream. Left pads with '0' (zeroes) to achieve the
@@ -120,6 +125,24 @@ public final class AsciiUtils {
 		while (width > 0) {
 			size = SIZE_TABLE[width - 1];
 			out.write(ZERO_ASCII_BYTE_VALUE + (x / size));
+			width--;
+			if (width > 0) {
+				x = x % size;
+			}
+		}
+	}
+
+	public static void writeIntAsHexAsciiBytes(
+			int x, OutputStream out, int width) throws IOException {
+		int size;
+		while (width > 0) {
+			size = HEX_SIZE_TABLE[width - 1];
+			int hexDigit = x / size;
+			if (hexDigit < 10) {
+				out.write(ZERO_ASCII_BYTE_VALUE + hexDigit);
+			} else {
+				out.write(UPPERCASE_LETTER_A_ASCII_BYTE_VALUE + hexDigit - 10);
+			}
 			width--;
 			if (width > 0) {
 				x = x % size;
