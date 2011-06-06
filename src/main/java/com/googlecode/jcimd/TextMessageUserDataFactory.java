@@ -20,6 +20,7 @@ import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
+import java.nio.charset.UnsupportedCharsetException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -34,8 +35,20 @@ import com.googlecode.jcimd.charset.GsmCharsetProvider;
 public class TextMessageUserDataFactory {
 
 	private static final Log logger = LogFactory.getLog(TextMessageUserDataFactory.class);
-	private static final Charset GSM = Charset.forName("GSM");
 	private static final Charset UTF16BE = Charset.forName("UTF-16BE");
+	private static final Charset GSM = loadGsmCharset();
+
+	private static Charset loadGsmCharset() {
+		try {
+			return Charset.forName("GSM");
+		} catch (UnsupportedCharsetException e) {
+			if (logger.isErrorEnabled()) {
+				logger.error("GSM character set not loaded via context class loader." +
+						" Instantiating it directly.");
+			}
+			return new GsmCharsetProvider().charsetForName("GSM");
+		}
+	}
 
 	static {
 		if (logger.isDebugEnabled()) {
