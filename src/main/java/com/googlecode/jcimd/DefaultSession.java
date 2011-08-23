@@ -50,30 +50,32 @@ public class DefaultSession implements Session {
 		try {
 			Packet response = this.connection.send(packet);
 			if (!response.isPositiveResponse()) {
-				/*
 				if (response.isNack()) {
-					throw new NackException();
-				} else if (response.hasErrorCodeParameter()) {
-					throw new NegativeResponseException(response);
+					throw new NackException(response.getSequenceNumber());
+				} else {
+					Parameter errorCodeParameter = response.getParameter(900);
+					String errorCode = errorCodeParameter != null ? errorCodeParameter.getValue() : null;
+					Parameter errorTextParameter = response.getParameter(901);
+					String errorText = errorCodeParameter != null ? errorTextParameter.getValue() : null;
+					if (errorText == null) {
+						throw new NegativeResponseException(Integer.valueOf(errorCode));
+					} else {
+						throw new NegativeResponseException(
+								Integer.valueOf(errorCode), errorText);
+					}
 				}
-				*/
-				throw new NonPositiveResponseException(
-						Integer.valueOf(response.getParameter(900).getValue()),
-						response.getParameter(901).getValue());
 			}
 			return response;
 		} catch (Exception e) {
 			try {
 				closeConnection();
-			} catch (IOException ioe2) {
-				// TODO: handle exception
-			}
+			} catch (IOException ignored) {}
 			throw new SessionException(e);
 		}
 	}
 
 	private void closeConnection() throws IOException {
-		if (this.connection != null) {
+		if (this.connection != null && this.connection.isOpen()) {
 			this.connection.close();
 		}
 		this.connection = null;

@@ -20,19 +20,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Thrown when a non-positive response message is received.
- * A non-positive response can be any of the following:
- * <ul>
- * <li>Negative response message</li>
- * <li>Nack message</li>
- * <li>General error response message</li>
- * </ul>
- *
  * @author Lorenzo Dee
+ *
  */
-public class NonPositiveResponseException extends SessionException {
+public class NegativeResponseException extends SessionException {
 
-	private static final long serialVersionUID = -4182893915006825597L;
+	private static final long serialVersionUID = -3968988289576317472L;
 
 	private static final Map<Integer, String> errorCodeTexts = new HashMap<Integer, String>();
 
@@ -52,12 +45,20 @@ public class NonPositiveResponseException extends SessionException {
 
 	private final int errorCode;
 
-	public NonPositiveResponseException(int errorCode) {
-		this(errorCode, errorCodeTexts.get(errorCode));
+	public NegativeResponseException(int errorCode) {
+		this(errorCode, errorCodeTexts.get(errorCode), null);
 	}
 
-	public NonPositiveResponseException(int errorCode, String errorText) {
-		super(errorText);
+	public NegativeResponseException(int errorCode, String message) {
+		this(errorCode, message, null);
+	}
+
+	public NegativeResponseException(int errorCode, Throwable cause) {
+		this(errorCode, errorCodeTexts.get(errorCode), cause);
+	}
+
+	public NegativeResponseException(int errorCode, String message, Throwable cause) {
+		super(message, cause);
 		this.errorCode = errorCode;
 	}
 

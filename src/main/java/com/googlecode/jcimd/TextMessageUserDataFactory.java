@@ -29,6 +29,12 @@ import com.googlecode.jcimd.charset.GsmCharsetProvider;
 
 /**
  * User data factory for text messages.
+ * <p>
+ * This class supports <a href="http://en.wikipedia.org/wiki/Concatenated_SMS">concatenated SMS</a>.
+ * Using this method, long messages are split into smaller messages by the sending
+ * device and recombined at the receiving end. Each message is then billed separately.
+ * When the feature works properly, it is nearly transparent to the user, appearing as
+ * a single long text message.
  * 
  * @author Lorenzo Dee
  */

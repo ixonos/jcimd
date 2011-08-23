@@ -19,6 +19,10 @@ package com.googlecode.jcimd;
 /**
  * Strategy interface for a CIMD connection
  * (connection from client to SMSC).
+ * <p>
+ * Once a connection has been closed, it is not available for further
+ * networking use (i.e. can't be reconnected). A new connection needs
+ * to be created.
  *
  * @author Lorenzo Dee
  */

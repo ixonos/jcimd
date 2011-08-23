@@ -106,10 +106,10 @@ public class TcpNetConnection implements Connection, Runnable {
 
 	@Override
 	public void close() {
-		logger.debug("Closing connection by sending logout operation...");
 		try {
 			try {
 				if (this.loggedIn) {
+					logger.debug("Closing connection by sending logout operation...");
 					logout();
 				}
 			} finally {
