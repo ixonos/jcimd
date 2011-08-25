@@ -1,10 +1,9 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>com.googlecode.jcimd</groupId>
 	<artifactId>jcimd</artifactId>
-	<version>0.5-SNAPSHOT</version>
+	<version>0.5</version>
 	<packaging>jar</packaging>
 
 	<name>Java CIMD API</name>
@@ -95,9 +94,9 @@
 	</build>
 
 	<scm>
-		<connection>scm:svn:http://jcimd.googlecode.com/svn</connection>
-		<developerConnection>scm:svn:https://jcimd.googlecode.com/svn</developerConnection>
-		<url>http://code.google.com/p/jcimd/source/browse</url>
+		<connection>scm:svn:http://jcimd.googlecode.com/svn/tags/jcimd-0.5</connection>
+		<developerConnection>scm:svn:https://jcimd.googlecode.com/svn/tags/jcimd-0.5</developerConnection>
+		<url>http://code.google.com/p/jcimd/source/browse/tags/jcimd-0.5</url>
 	</scm>
 	<distributionManagement>
 		<repository>
