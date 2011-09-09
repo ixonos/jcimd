@@ -56,7 +56,7 @@ public class DefaultSession implements Session {
 					Parameter errorCodeParameter = response.getParameter(900);
 					String errorCode = errorCodeParameter != null ? errorCodeParameter.getValue() : null;
 					Parameter errorTextParameter = response.getParameter(901);
-					String errorText = errorCodeParameter != null ? errorTextParameter.getValue() : null;
+					String errorText = errorTextParameter != null ? errorTextParameter.getValue() : null;
 					if (errorText == null) {
 						throw new NegativeResponseException(Integer.valueOf(errorCode));
 					} else {
