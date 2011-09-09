@@ -65,7 +65,7 @@ public class Gsm7BitPackedCharset extends Charset {
 			// 14 bits for escaped characters
 			// average bits per character is 10.5
 			// that's about 1.3 bytes per character
-			super(charset, (7+14/2f)/8f, 2f);
+			super(charset, ((7+14)/2f)/8f, 2f);
 		}
 
 		@Override
@@ -73,37 +73,47 @@ public class Gsm7BitPackedCharset extends Charset {
 			int remaining = in.remaining();
 			while (remaining > 0) {
 				char ch = in.get();
-				int b = CHAR_TO_BYTE[ch];
-				if (b == GsmCharsetProvider.NO_GSM_BYTE) {
-					// If ch does not map to a GSM character, replace with a '?'
-					b = '?';
-				}
-				byte highByte = (byte) ((b >> 8) & 0xFF);
-				if (highByte > 0) {
-					data |= (highByte << nBits);
-					nBits += 7;
-				}
-				data |= ((b & 0xFF) << nBits);
-				nBits += 7;
-				while (nBits >= 8) {
-					if (out.remaining() < 1) {
-						return CoderResult.OVERFLOW;
-					}
-					out.put((byte) (data & 0xFF));
-					data >>>= 8;
-					nBits -= 8;
-				}
+				encodeCharacter(ch, out);
 				remaining--;
 			}
 			if (nBits > 0) {
 				if (out.remaining() < 1) {
 					return CoderResult.OVERFLOW;
 				}
-				out.put((byte) (data & 0xFF));
+				if ((nBits + 7) % 8 == 0) {
+					// this fixes an ambiguity bug in the specification
+					// where the last of 8 packed bytes is 0
+					encodeCharacter((char) 0x000c, out);
+				} else {
+					out.put((byte) (data & 0xFF));
+				}
 			}
 			return CoderResult.UNDERFLOW;
 		}
-		
+
+		private CoderResult encodeCharacter(char ch, ByteBuffer out) {
+			int b = CHAR_TO_BYTE[ch];
+			if (b == GsmCharsetProvider.NO_GSM_BYTE) {
+				// If ch does not map to a GSM character, replace with a '?'
+				b = '?';
+			}
+			byte highByte = (byte) ((b >> 8) & 0xFF);
+			if (highByte > 0) {
+				data |= (highByte << nBits);
+				nBits += 7;
+			}
+			data |= ((b & 0xFF) << nBits);
+			nBits += 7;
+			while (nBits >= 8) {
+				if (out.remaining() < 1) {
+					return CoderResult.OVERFLOW;
+				}
+				out.put((byte) (data & 0xFF));
+				data >>>= 8;
+				nBits -= 8;
+			}
+			return CoderResult.UNDERFLOW;
+		}
 	}
 
 	protected class Decoder7Bit extends CharsetDecoder {
@@ -151,6 +161,18 @@ public class Gsm7BitPackedCharset extends Charset {
 				remaining--;
 			}
 			return CoderResult.UNDERFLOW;
+		}
+
+		@Override
+		protected CoderResult implFlush(CharBuffer out) {
+			int pos = out.position();
+			if (pos > 0 && (pos % 8 == 0)) {
+				// this fixes an ambiguity bug in the specification
+				// where the last of 8 packed bytes is 0
+				if (out.get(pos - 1) == '@')
+					out.position(pos - 1);
+			}
+            return CoderResult.UNDERFLOW;
 		}
 
 	}

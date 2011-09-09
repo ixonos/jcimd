@@ -188,4 +188,31 @@ public class Gsm7BitPackedCharsetTest {
 		assertEquals("abc123{}[]", charBuffer2.toString());
 	}
 
+	@Test
+	public void trailingCommercialAtIsIgnored() throws Exception {
+		byte[] bytes = new byte[] {
+				(byte) 0x31, (byte) 0xD9, (byte) 0x8C, (byte) 0x56,
+				(byte) 0xB3, (byte) 0xDD, (byte) 0x00
+			};
+		ByteBuffer byteBuffer = ByteBuffer.wrap(bytes);
+		CharBuffer charBuffer2 = decoder.decode(byteBuffer);
+		assertEquals("1234567", charBuffer2.toString());
+	}
+
+	@Test
+	public void trailingCommercialAtAmbiguityIsAvoided() throws Exception {
+		final String textMessage = "1234567";
+		ByteBuffer byteBuffer = ByteBuffer.allocate(
+				textMessage.length() * (int) Math.ceil(encoder.maxBytesPerChar()));
+		encoder.encode(CharBuffer.wrap(textMessage), byteBuffer, true);
+		byte[] bytes = new byte[byteBuffer.position()];
+		byteBuffer.flip();
+		byteBuffer.get(bytes);
+		byte expecteds[] = new byte[] {
+				(byte) 0x31, (byte) 0xD9, (byte) 0x8C, (byte) 0x56,
+				(byte) 0xB3, (byte) 0xDD, (byte) 0x36
+			};
+		assertArrayEquals(expecteds, bytes);
+	}
+
 }
