@@ -21,6 +21,7 @@ import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.UnsupportedCharsetException;
+import java.util.Random;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -90,6 +91,12 @@ public class TextMessageUserDataFactory {
 		return newInstance(textMessage, 140);
 	}
 
+	private static byte nextRandom() {
+		byte bytes[] = { 0x00 };
+		new Random().nextBytes(bytes);
+		return bytes[0];
+	}
+
 	/**
 	 * Creates an array of one or more {@link UserData} objects that represent the given
 	 * text message. This method does the splitting of messages (when over the given
@@ -128,7 +135,7 @@ public class TextMessageUserDataFactory {
 				logger.debug("Splitting " + textMessageBytes + " bytes to " + numberOfParts + " parts");
 			}
 			byte[] udh, udhTemplate = new byte[] {
-					0x05, 0x00, 0x03, 0x01 /* generate unique id */,
+					0x05, 0x00, 0x03, nextRandom() /* generate unique id */,
 					(byte) (numberOfParts & 0xff), 0x00
 			};
 			if (noNonGsmCharacters) {
