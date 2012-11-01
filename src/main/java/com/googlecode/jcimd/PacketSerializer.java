@@ -273,7 +273,8 @@ public class PacketSerializer {
 		}
 
 		// Deserialize bytes, minus STX, CC (check sum), and ETX.
-		Packet packet = deserializeFromByteArray(bytes, 1, bytes.length - 3);
+		int end = useChecksum ? bytes.length - 3 : bytes.length - 1;
+		Packet packet = deserializeFromByteArray(bytes, 1, end);
 		if (logger.isDebugEnabled()) {
 			logger.debug("Received " + packet);
 		}

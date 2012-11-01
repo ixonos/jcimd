@@ -101,6 +101,22 @@ public class PacketSerializerTest {
 		assertEquals(command, actual);
 	}
 
+  @Test
+  public void deserializeLoginCommandWithoutChkSum() throws Exception {
+    PacketSerializer ser = new PacketSerializer("ser", false);
+    byte[] bytes = concat(
+        ("" + STX + "01" + COLON + "001" + TAB).getBytes(),
+        ("010" + COLON + "username" + TAB).getBytes(),
+        ("011" + COLON + "password" + TAB).getBytes(),
+        ("" + ETX).getBytes());
+    ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
+    Packet command = new Packet(1, 1,
+        new Parameter(10, "username"),
+        new Parameter(11, "password"));
+    Packet actual = ser.deserialize(inputStream);
+    assertEquals(command, actual);
+  }
+  
 	@Test
 	public void deserializeLoginCommandWithExtraDataBetweenPackets() throws Exception {
 		byte[] bytes = concat(
