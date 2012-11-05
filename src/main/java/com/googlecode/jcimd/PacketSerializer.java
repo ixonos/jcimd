@@ -73,6 +73,7 @@ public class PacketSerializer {
 	private static final int DEFAULT_MAX_SIZE = 1024 * 4;
 
 	private final Log logger;
+	private static final Log clLogger = LogFactory.getLog(PacketSerializer.class);
 
 	private final boolean useChecksum; 
 	private int maxMessageSize = DEFAULT_MAX_SIZE;
@@ -132,21 +133,31 @@ public class PacketSerializer {
 		this.sequenceNumberGenerator = sequenceNumberGenerator;
 	}
 
-	public void serialize(Packet packet, OutputStream outputStream)
+	 public void serialize(Packet packet, OutputStream outputStream)
+	      throws IOException {
+	   doSerializePacket(packet, sequenceNumberGenerator, useChecksum, logger, outputStream);
+	 }
+	 
+  public static void serializePacket(Packet packet, PacketSequenceNumberGenerator sequenceNumberGenerator, boolean useChecksum, OutputStream outputStream)
+      throws IOException {
+    doSerializePacket(packet, sequenceNumberGenerator, useChecksum, clLogger, outputStream);
+  }
+  
+	private static void doSerializePacket(Packet packet, PacketSequenceNumberGenerator sequenceNumberGenerator, boolean useChecksum, Log logger, OutputStream outputStream)
 			throws IOException {
 		if (logger.isDebugEnabled()) {
 			logger.debug("Sending " + packet);
 		}
-		byte[] bytes = serializeToByteArray(packet);
+		byte[] bytes = serializeToByteArray(packet, sequenceNumberGenerator, logger);
 		outputStream.write(bytes);
-		if (this.useChecksum) {
+		if (useChecksum) {
 			int checkSum = calculateCheckSum(bytes);
 			AsciiUtils.writeIntAsHexAsciiBytes(checkSum, outputStream, 2);
 		}
 		outputStream.write(ETX);
 	}
 
-	private byte[] serializeToByteArray(Packet packet) throws IOException {
+	private static byte[] serializeToByteArray(Packet packet, PacketSequenceNumberGenerator sequenceNumberGenerator, Log logger) throws IOException {
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 		outputStream.write(STX);
 		AsciiUtils.writeIntAsAsciiBytes(
@@ -157,8 +168,8 @@ public class PacketSerializer {
 			if (logger.isTraceEnabled()) {
 				logger.trace("No sequence number in packet, generating one...");
 			}
-			if (this.sequenceNumberGenerator != null) {
-				sequenceNumber = this.sequenceNumberGenerator.nextSequence();
+			if (sequenceNumberGenerator != null) {
+				sequenceNumber = sequenceNumberGenerator.nextSequence();
 				if (logger.isTraceEnabled()) {
 					logger.trace("Generated " + sequenceNumber + " as sequence number");
 				}
@@ -190,7 +201,7 @@ public class PacketSerializer {
 	 * @param bytes the array from which a check sum is calculated
 	 * @return the check sum
 	 */
-	private int calculateCheckSum(byte[] bytes) {
+	private static int calculateCheckSum(byte[] bytes) {
 		return calculateCheckSum(bytes, 0, bytes.length);
 	}
 
@@ -203,7 +214,7 @@ public class PacketSerializer {
 	 *     (This index may lie outside the array.)
 	 * @return the check sum
 	 */
-	private int calculateCheckSum(byte[] bytes, int from, int to) {
+	private static int calculateCheckSum(byte[] bytes, int from, int to) {
 		int sum = 0;
 		for (int i = from; i < to; i++) {
 			sum += bytes[i];
@@ -213,6 +224,14 @@ public class PacketSerializer {
 	}
 
 	public Packet deserialize(InputStream inputStream) throws IOException {
+	  return doDeserializePacket(inputStream, getMaxMessageSize(), useChecksum, logger);
+	}
+	
+	public static Packet deserializePacket(InputStream inputStream, boolean useChecksum) throws IOException {
+	  return doDeserializePacket(inputStream, DEFAULT_MAX_SIZE, useChecksum, clLogger);
+	}
+	
+	private static Packet doDeserializePacket(InputStream inputStream, int maxMessageSize, boolean useChecksum, Log logger) throws IOException {
 		ByteArrayOutputStream temp = new ByteArrayOutputStream();
 		int b;
 		while ((b = inputStream.read()) != END_OF_STREAM) {
@@ -233,7 +252,7 @@ public class PacketSerializer {
 			if (b == ETX) {
 				break;
 			}
-			if (temp.size() >= getMaxMessageSize()) {
+			if (temp.size() >= maxMessageSize) {
 				// Protect from buffer overflow
 				throw new IOException(
 						"Buffer overflow reached at " + temp.size()
@@ -281,7 +300,7 @@ public class PacketSerializer {
 		return packet;
 	}
 
-	private Packet deserializeFromByteArray(
+	private static Packet deserializeFromByteArray(
 			byte[] bytes, int from, int to) throws IOException {
 		StringBuilder buffer = new StringBuilder();
 		int i = from;
@@ -330,7 +349,7 @@ public class PacketSerializer {
 	 * @throws IOException if a reserved character was reached, and it is
 	 *     not the expected <em>delimiter</em>.
 	 */
-	private int readToBufferUntil(
+	private static int readToBufferUntil(
 			byte[] bytes, int from, int to, int maxOffset,
 			StringBuilder buffer, byte delimiter)
 	throws IOException {
